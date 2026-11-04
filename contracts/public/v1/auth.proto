@@ -1,0 +1,174 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "public/v1/common.proto";
+
+service AuthService {
+  rpc ListLoginMethods(ListLoginMethodsRequest) returns (ListLoginMethodsResponse);
+  rpc BeginPasskeyAuthentication(BeginPasskeyAuthenticationRequest) returns (PasskeyCeremony);
+  rpc FinishPasskeyAuthentication(FinishPasskeyAuthenticationRequest) returns (TokenPair);
+  rpc StartNativeExternalLogin(StartNativeExternalLoginRequest) returns (StartNativeExternalLoginResponse);
+  rpc ExchangeNativeExternalLogin(ExchangeNativeExternalLoginRequest) returns (TokenPair);
+  rpc Refresh(RefreshRequest) returns (TokenPair);
+  rpc SendEmailCode(SendEmailCodeRequest) returns (SendEmailCodeResponse);
+  rpc CheckEmailCode(CheckEmailCodeRequest) returns (TokenPair);
+  rpc Logout(LogoutRequest) returns (Empty);
+  rpc LogoutFromDevice(LogoutFromDeviceRequest) returns (LogoutFromDeviceResponse);
+  rpc LogoutFromAll(Empty) returns (Empty);
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
+  rpc UpdateDevice(UpdateDeviceRequest) returns (Empty);
+  rpc DeleteDevice(DeleteDeviceRequest) returns (Empty);
+  rpc BeginPasskeyRegistration(Empty) returns (PasskeyCeremony);
+  rpc FinishPasskeyRegistration(FinishPasskeyRegistrationRequest) returns (PasskeyCredential);
+  rpc ListPasskeys(Empty) returns (ListPasskeysResponse);
+  rpc RevokePasskey(RevokePasskeyRequest) returns (Empty);
+}
+
+message ListLoginMethodsRequest {
+}
+
+message ExternalLoginProvider {
+  string slug = 1;
+  string display_name = 2;
+}
+
+message ListLoginMethodsResponse {
+  repeated ExternalLoginProvider providers = 5;
+  repeated LegalDocument legal_documents = 7;
+}
+
+message LegalDocument {
+  string kind = 1;
+  string version = 2;
+  string title = 3;
+  string route = 4;
+}
+
+message BeginPasskeyAuthenticationRequest {
+  string email = 1;
+}
+
+message PasskeyCeremony {
+  string ceremony_id = 1;
+  string options_json = 2;
+  int64 expires_at_unix_seconds = 3;
+}
+
+message FinishPasskeyAuthenticationRequest {
+  string ceremony_id = 1;
+  string response_json = 2;
+  DeviceContext device = 3;
+}
+
+message FinishPasskeyRegistrationRequest {
+  string ceremony_id = 1;
+  string response_json = 2;
+  string label = 3;
+}
+
+message PasskeyCredential {
+  string id = 1;
+  string label = 2;
+  int64 created_at_unix_seconds = 3;
+  optional int64 last_used_at_unix_seconds = 4;
+}
+
+message ListPasskeysResponse {
+  repeated PasskeyCredential passkeys = 1;
+}
+
+message RevokePasskeyRequest {
+  string passkey_id = 1;
+}
+
+message StartNativeExternalLoginRequest {
+  string provider = 1;
+  string exchange_challenge = 2;
+  DeviceContext device = 3;
+}
+
+message StartNativeExternalLoginResponse {
+  string authorization_url = 1;
+  int64 expires_at_unix_seconds = 2;
+}
+
+message ExchangeNativeExternalLoginRequest {
+  string ticket = 1;
+  string exchange_verifier = 2;
+}
+
+message RefreshRequest {
+  // Empty for gRPC-Web: the edge reads the HttpOnly refresh cookie.
+  // Native clients may send the token from platform secure storage.
+  optional string refresh_token = 1;
+  DeviceContext device = 2;
+}
+
+message TokenPair {
+  string access_token = 1;
+  int64 access_expires_at_unix_seconds = 2;
+  // Omitted for gRPC-Web, where refresh remains in an HttpOnly cookie.
+  optional string refresh_token = 3;
+  int64 refresh_expires_at_unix_seconds = 4;
+}
+
+message SendEmailCodeRequest {
+  string email = 1;
+  string password = 2;
+  DeviceContext device = 3;
+}
+
+message SendEmailCodeResponse {
+  bool known_device = 1;
+  // Present when a known device is authenticated in the same request.
+  TokenPair token_pair = 2;
+}
+
+message CheckEmailCodeRequest {
+  string email = 1;
+  string code = 2;
+  bool remember_me = 3;
+  DeviceContext device = 4;
+}
+
+message LogoutRequest {
+  optional string refresh_token = 1;
+  DeviceContext device = 2;
+}
+
+message LogoutFromDeviceRequest {
+  string device_id = 1;
+}
+
+message LogoutFromDeviceResponse {
+  bool current_session_revoked = 1;
+}
+
+message ListDevicesRequest {}
+
+message ListDevicesResponse {
+  repeated Device devices = 1;
+}
+
+message Device {
+  string id = 1;
+  string name = 2;
+  string device_type = 3;
+  string os = 4;
+  string browser = 5;
+  string user_agent = 6;
+  string ip = 7;
+  bool remember_me = 8;
+  int64 last_active_at_unix_seconds = 9;
+  int64 updated_at_unix_seconds = 10;
+}
+
+message UpdateDeviceRequest {
+  string device_id = 1;
+  string name = 2;
+}
+
+message DeleteDeviceRequest {
+  string device_id = 1;
+}

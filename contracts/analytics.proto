@@ -1,0 +1,17 @@
+syntax = "proto3";
+package analytics;
+
+service AnalyticsService {
+  rpc Dashboard(AnalyticsDashboardRequest) returns (AnalyticsDashboardResponse);
+}
+
+message AnalyticsDashboardRequest {
+  repeated string server_ids = 1;
+  string from = 2;
+  string to = 3;
+  bool include_global = 4;
+}
+
+message AnalyticsDashboardResponse {
+  bytes data = 1;
+}

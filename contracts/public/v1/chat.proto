@@ -1,0 +1,431 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "public/v1/common.proto";
+import "public/v1/users.proto";
+import "public/v1/stickers.proto";
+
+service RoomsService {
+  rpc ListRooms(ListRoomsRequest) returns (ListRoomsResponse);
+  rpc GetRoom(GetRoomRequest) returns (Room);
+  rpc CreateRoom(CreateRoomRequest) returns (Room);
+  rpc UpdateRoom(UpdateRoomRequest) returns (Empty);
+  rpc DeleteRoom(RoomIdRequest) returns (Empty);
+  rpc ToggleMember(ToggleRoomMemberRequest) returns (Empty);
+  rpc GetPermissions(RoomIdRequest) returns (RoomAccessSettings);
+  rpc UpdatePermissions(UpdateRoomPermissionsRequest) returns (RoomAccessSettings);
+}
+
+service MessagesService {
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+  rpc SearchMessages(SearchMessagesRequest) returns (ListMessagesResponse);
+  rpc GetMessage(GetMessageRequest) returns (Message);
+  rpc RequestMessageTranscription(RequestMessageTranscriptionRequest) returns (MessageTranscription);
+  rpc RequestMessageTranslation(RequestMessageTranslationRequest) returns (MessageTranslation);
+  rpc RequestChatSummary(RequestChatSummaryRequest) returns (ChatSummary);
+  rpc DeleteMessage(DeleteMessageRequest) returns (Empty);
+  rpc TogglePin(GetMessageRequest) returns (Empty);
+  rpc ListCollections(ListCollectionsRequest) returns (ListCollectionsResponse);
+  rpc CreateCollection(CreateCollectionRequest) returns (MessageCollection);
+  rpc UpdateCollection(UpdateCollectionRequest) returns (MessageCollection);
+  rpc DeleteCollection(CollectionRequest) returns (Empty);
+  rpc SetCollectionItem(SetCollectionItemRequest) returns (Empty);
+}
+
+enum ConversationKind {
+  CONVERSATION_KIND_UNSPECIFIED = 0;
+  CONVERSATION_KIND_ROOM = 1;
+  CONVERSATION_KIND_HUMAN_DIRECT = 2;
+  reserved 3;
+  reserved "CONVERSATION_KIND_BOT_DIRECT";
+}
+
+message Room {
+  string id = 1;
+  optional string server_id = 2;
+  string owner_id = 3;
+  bool is_direct = 4;
+  string name = 5;
+  string type = 6;
+  repeated string allowed_user_ids = 7;
+  optional string last_message_id = 8;
+  optional MessagePrincipal last_message_author = 9;
+  optional string last_seen_message_id = 10;
+  uint64 last_seen_sequence = 11;
+  optional string last_message_content = 12;
+  repeated MessageMedia last_message_media = 13;
+  optional int64 last_message_created_at_unix_seconds = 14;
+  uint64 unread_count = 15;
+  repeated Message messages = 16;
+  optional int64 created_at_unix_seconds = 17;
+  optional int64 updated_at_unix_seconds = 18;
+  optional int64 deleted_at_unix_seconds = 19;
+  ConversationKind conversation_kind = 20;
+  reserved 21, 22;
+  reserved "bot_identity", "bot_installation_id";
+}
+
+message ListRoomsRequest {
+  uint32 page = 1;
+  uint32 page_size = 2;
+  string kind = 3;
+  optional string query = 4;
+  optional string server_id = 5;
+  optional string after = 6;
+  optional string updated_after = 7;
+}
+
+message ListRoomsResponse {
+  repeated Room rooms = 1;
+  uint32 current_page = 2;
+  bool has_next_page = 3;
+}
+
+message GetRoomRequest {
+  string room_id = 1;
+  optional string preview_server_id = 2;
+}
+
+message RoomIdRequest {
+  string room_id = 1;
+}
+
+message CreateRoomRequest {
+  optional string server_id = 1;
+  string owner_id = 2;
+  string name = 3;
+  string type = 4;
+  repeated string allowed_user_ids = 5;
+  optional bool default_can_view = 6;
+  optional bool default_can_send = 7;
+  optional bool default_can_connect = 8;
+  repeated RoomPermissionOverride overrides = 9;
+}
+
+message UpdateRoomRequest {
+  string room_id = 1;
+  string name = 2;
+  string type = 3;
+  repeated string allowed_user_ids = 4;
+}
+
+message ToggleRoomMemberRequest {
+  string room_id = 1;
+  string user_id = 2;
+}
+
+message RoomPermissionOverride {
+  string user_id = 1;
+  optional bool can_view = 2;
+  optional bool can_send = 3;
+  optional bool can_connect = 4;
+}
+
+message RoomAccessSettings {
+  bool default_can_view = 1;
+  bool default_can_send = 2;
+  bool default_can_connect = 3;
+  repeated RoomPermissionOverride overrides = 4;
+}
+
+message UpdateRoomPermissionsRequest {
+  string room_id = 1;
+  RoomAccessSettings settings = 2;
+}
+
+message Reaction {
+  string emoji = 1;
+  repeated string user_ids = 2;
+}
+
+message MetadataValue {
+  oneof kind {
+    bool bool_value = 1;
+    double number_value = 2;
+    string string_value = 3;
+    MetadataList list_value = 4;
+    MetadataMap map_value = 5;
+    Empty null_value = 6;
+  }
+}
+
+message MetadataList {
+  repeated MetadataValue values = 1;
+}
+
+message MetadataEntry {
+  string key = 1;
+  MetadataValue value = 2;
+}
+
+message MetadataMap {
+  repeated MetadataEntry entries = 1;
+}
+
+enum PrincipalKind {
+  PRINCIPAL_KIND_UNSPECIFIED = 0;
+  PRINCIPAL_KIND_USER = 1;
+  reserved 2;
+  reserved "PRINCIPAL_KIND_BOT";
+}
+
+message MessagePrincipal {
+  string id = 1;
+  PrincipalKind kind = 2;
+  optional string name = 4;
+  repeated PublicMedia media = 5;
+  optional string avatar_color = 6;
+  reserved 3;
+  reserved "application_id";
+}
+
+// Message-owned metadata is kept beside the canonical media projection so a
+// cold history read is identical to the realtime attachment projection.
+message MessageMedia {
+  PublicMedia projection = 1;
+  optional string name = 2;
+  optional string mime_type = 3;
+  optional int64 size = 4;
+  optional int64 duration_ms = 5;
+  repeated float waveform = 6;
+}
+
+message Message {
+  string id = 1;
+  MessagePrincipal author = 2;
+  string client_id = 3;
+  string room_id = 4;
+  uint64 room_sequence = 5;
+  optional string reply_id = 6;
+  optional string forwarded_from_message_id = 7;
+  optional string forwarded_from_room_id = 8;
+  optional string forwarded_from_server_id = 9;
+  optional MessagePrincipal forwarded_from_author = 10;
+  reserved 11;
+  string content = 12;
+  repeated MessageMedia media = 13;
+  repeated Reaction reactions = 14;
+  MetadataMap additional_data = 15;
+  bool is_edited = 16;
+  bool pinned = 17;
+  string type = 18;
+  optional int64 created_at_unix_seconds = 19;
+  optional int64 updated_at_unix_seconds = 20;
+  optional int64 deleted_at_unix_seconds = 21;
+  optional string reply_content = 22;
+  repeated MessageMedia reply_media = 23;
+  optional MessagePrincipal reply_author = 24;
+  reserved 25, 26, 27;
+  repeated MessageTranscription transcriptions = 28;
+  optional StickerMessageProjection sticker = 31;
+  repeated MessagePrincipal mentioned_principals = 32;
+  reserved 29;
+  reserved "action_rows";
+  reserved 30;
+  reserved "component_revision";
+}
+
+enum MessageTranscriptionStatus {
+  MESSAGE_TRANSCRIPTION_STATUS_UNSPECIFIED = 0;
+  MESSAGE_TRANSCRIPTION_STATUS_QUEUED = 1;
+  MESSAGE_TRANSCRIPTION_STATUS_PROCESSING = 2;
+  MESSAGE_TRANSCRIPTION_STATUS_READY = 3;
+  MESSAGE_TRANSCRIPTION_STATUS_FAILED_RETRYABLE = 4;
+  MESSAGE_TRANSCRIPTION_STATUS_FAILED_TERMINAL = 5;
+  MESSAGE_TRANSCRIPTION_STATUS_CANCELLED = 6;
+}
+
+message MessageTranscriptionSegment {
+  uint64 start_ms = 1;
+  uint64 end_ms = 2;
+  string text = 3;
+  optional float confidence = 4;
+}
+
+message MessageTranscription {
+  string message_id = 1;
+  string media_id = 2;
+  MessageTranscriptionStatus status = 3;
+  optional string text = 4;
+  optional string detected_language = 5;
+  repeated MessageTranscriptionSegment segments = 6;
+  optional string error_code = 7;
+  bool retryable = 8;
+  int64 requested_at_unix_ms = 9;
+  int64 updated_at_unix_ms = 10;
+}
+
+message RequestMessageTranscriptionRequest {
+  string room_id = 1;
+  string message_id = 2;
+  string media_id = 3;
+  optional string language = 4;
+  string idempotency_key = 5;
+}
+
+enum MessageTranslationSourceKind {
+  MESSAGE_TRANSLATION_SOURCE_KIND_UNSPECIFIED = 0;
+  MESSAGE_TRANSLATION_SOURCE_KIND_MESSAGE = 1;
+  MESSAGE_TRANSLATION_SOURCE_KIND_TRANSCRIPTION = 2;
+}
+
+enum MessageTranslationStatus {
+  MESSAGE_TRANSLATION_STATUS_UNSPECIFIED = 0;
+  MESSAGE_TRANSLATION_STATUS_QUEUED = 1;
+  MESSAGE_TRANSLATION_STATUS_PROCESSING = 2;
+  MESSAGE_TRANSLATION_STATUS_READY = 3;
+  MESSAGE_TRANSLATION_STATUS_FAILED_RETRYABLE = 4;
+  MESSAGE_TRANSLATION_STATUS_FAILED_TERMINAL = 5;
+  MESSAGE_TRANSLATION_STATUS_CANCELLED = 6;
+}
+
+message MessageTranslation {
+  MessageTranslationSourceKind source_kind = 1;
+  string source_id = 2;
+  string message_id = 3;
+  string target_language = 4;
+  MessageTranslationStatus status = 5;
+  optional string translated_text = 6;
+  optional string model_revision = 7;
+  optional string error_code = 8;
+  bool retryable = 9;
+  int64 requested_at_unix_ms = 10;
+  int64 updated_at_unix_ms = 11;
+}
+
+message RequestMessageTranslationRequest {
+  string room_id = 1;
+  string message_id = 2;
+  optional string media_id = 3;
+  string target_language = 4;
+  string idempotency_key = 5;
+}
+
+enum ChatSummaryStatus {
+  CHAT_SUMMARY_STATUS_UNSPECIFIED = 0;
+  CHAT_SUMMARY_STATUS_QUEUED = 1;
+  CHAT_SUMMARY_STATUS_PROCESSING = 2;
+  CHAT_SUMMARY_STATUS_READY = 3;
+  CHAT_SUMMARY_STATUS_FAILED_RETRYABLE = 4;
+  CHAT_SUMMARY_STATUS_FAILED_TERMINAL = 5;
+  CHAT_SUMMARY_STATUS_CANCELLED = 6;
+}
+
+message ChatSummarySource {
+  string message_id = 1;
+  uint64 room_sequence = 2;
+}
+
+message ChatSummaryItem {
+  string text = 1;
+  repeated ChatSummarySource sources = 2;
+}
+
+message ChatSummary {
+  string snapshot_id = 1;
+  string room_id = 2;
+  uint64 from_sequence = 3;
+  uint64 to_sequence = 4;
+  ChatSummaryStatus status = 5;
+  optional string overview = 6;
+  repeated ChatSummaryItem key_decisions = 7;
+  repeated ChatSummaryItem mentions = 8;
+  repeated ChatSummaryItem open_questions = 9;
+  repeated ChatSummaryItem action_items = 10;
+  optional string model_revision = 11;
+  optional string error_code = 12;
+  bool retryable = 13;
+  int64 updated_at_unix_ms = 14;
+}
+
+message RequestChatSummaryRequest {
+  string room_id = 1;
+  string idempotency_key = 2;
+}
+
+message ListMessagesRequest {
+  string room_id = 1;
+  uint32 page = 2;
+  uint32 page_size = 3;
+  optional string after = 4;
+  optional string before = 5;
+  optional string around = 6;
+  optional string query = 7;
+  optional bool pinned = 8;
+  optional string updated_after = 9;
+  optional string created_from = 10;
+  optional string created_before = 11;
+  optional string preview_server_id = 12;
+  optional string collection_id = 13;
+  optional string media_category = 14;
+}
+
+message SearchMessagesRequest {
+  string query = 1;
+  uint32 page = 2;
+  uint32 page_size = 3;
+  optional string room_id = 4;
+}
+
+message ListMessagesResponse {
+  repeated Message messages = 1;
+  uint32 current_page = 2;
+  bool has_next_page = 3;
+  bool has_older = 4;
+  bool has_newer = 5;
+}
+
+message GetMessageRequest {
+  string room_id = 1;
+  string message_id = 2;
+  optional string preview_server_id = 3;
+}
+
+message DeleteMessageRequest {
+  string room_id = 1;
+  string message_id = 2;
+  bool for_everyone = 3;
+}
+
+message MessageCollection {
+  string id = 1;
+  string user_id = 2;
+  string room_id = 3;
+  string name = 4;
+  repeated string message_ids = 5;
+  optional int64 created_at_unix_seconds = 6;
+  optional int64 updated_at_unix_seconds = 7;
+}
+
+message ListCollectionsRequest {
+  string room_id = 1;
+  optional string updated_after = 2;
+}
+
+message ListCollectionsResponse {
+  repeated MessageCollection collections = 1;
+}
+
+message CreateCollectionRequest {
+  string room_id = 1;
+  string name = 2;
+}
+
+message UpdateCollectionRequest {
+  string room_id = 1;
+  string collection_id = 2;
+  string name = 3;
+}
+
+message CollectionRequest {
+  string room_id = 1;
+  string collection_id = 2;
+}
+
+message SetCollectionItemRequest {
+  string room_id = 1;
+  string collection_id = 2;
+  string message_id = 3;
+  bool active = 4;
+}

@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package benito.discovery.internal.v1;
+
+import "discovery/internal/v1/projection.proto";
+
+service DiscoveryReadService {
+  rpc ListFeed(ListFeedRequest) returns (ListFeedResponse);
+  rpc Search(SearchRequest) returns (ListFeedResponse);
+  rpc GetPreview(GetPreviewRequest) returns (GetPreviewResponse);
+  rpc SearchStickerPacks(SearchStickerPacksRequest)
+      returns (SearchStickerPacksResponse);
+}
+
+message SearchStickerPacksRequest {
+  string query = 1;
+  optional string cursor = 2;
+  uint32 page_size = 3;
+}
+
+message SearchStickerPacksResponse {
+  repeated string pack_ids = 1;
+  optional string next_cursor = 2;
+}
+
+enum DiscoveryFeed {
+  DISCOVERY_FEED_UNSPECIFIED = 0;
+  DISCOVERY_FEED_NEW = 1;
+  DISCOVERY_FEED_TRENDING = 2;
+  DISCOVERY_FEED_RECOMMENDED = 3;
+}
+
+message DiscoveryAffinitySignal {
+  string id = 1;
+  uint32 weight = 2;
+}
+
+message ListFeedRequest {
+  DiscoveryFeed feed = 1;
+  optional string category_id = 2;
+  repeated string tag_ids = 3;
+  optional string cursor = 4;
+  uint32 page_size = 5;
+  repeated string excluded_server_ids = 6;
+  repeated DiscoveryAffinitySignal affinity_categories = 7;
+  repeated DiscoveryAffinitySignal affinity_tags = 8;
+  string affinity_revision = 9;
+  string exploration_seed = 10;
+}
+
+message SearchRequest {
+  string query = 1;
+  optional string category_id = 2;
+  repeated string tag_ids = 3;
+  optional string cursor = 4;
+  uint32 page_size = 5;
+  repeated string excluded_server_ids = 6;
+}
+
+message ListFeedResponse {
+  repeated ServerDiscoveryDocument servers = 1;
+  optional string next_cursor = 2;
+  string rank_epoch = 3;
+}
+
+message GetPreviewRequest {
+  string server_id = 1;
+}
+
+message GetPreviewResponse {
+  optional ServerDiscoveryDocument server = 1;
+}

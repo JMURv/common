@@ -1,0 +1,98 @@
+syntax = "proto3";
+package users;
+
+import "google/protobuf/timestamp.proto";
+
+service UserService {
+  rpc GetMe(GetMeRequest) returns(UserWithoutPassword);
+  rpc ListUsers(ListUsersRequest) returns(ListUsersResponse);
+  rpc GetUser(GetUserRequest) returns(UserWithoutPassword);
+  rpc GetUserByEmail(GetUserByEmailRequest) returns(UserWithoutPassword);
+  rpc CreateUser(CreateUserRequest) returns(CreateUserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns(UpdateUserResponse);
+  rpc DisableUser(DisableUserRequest) returns(DisableUserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns(DeleteUserResponse);
+  rpc IsUserExists(IsUserExistsRequest) returns(IsUserExistsResponse);
+}
+
+message UserWithoutPassword {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  reserved 4, 5;
+  bool is_identity_verified = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+  google.protobuf.Timestamp deleted_at = 9;
+}
+
+message GetMeRequest {}
+
+message ListUsersRequest {
+  reserved 1, 2;
+  optional bool is_identity_verified = 3;
+  uint32 page = 4;
+  uint32 size = 5;
+}
+
+message ListUsersResponse {
+  repeated UserWithoutPassword users = 1;
+  uint32 current_page = 2;
+  bool has_next_page = 3;
+}
+
+message GetUserRequest {
+  string uid = 1;
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message CreateUserRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+  repeated string roles = 4;
+  optional RegistrationLegalAcceptance legal_acceptance = 5;
+}
+
+message RegistrationLegalAcceptance {
+  string user_agreement_version = 1;
+  string personal_data_consent_version = 2;
+}
+
+message CreateUserResponse {
+  string id = 1;
+  bool inserted = 2;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+message UpdateUserResponse {}
+
+message DisableUserRequest {
+  string id = 1;
+}
+
+message DisableUserResponse {}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message DeleteUserResponse {}
+
+
+
+message IsUserExistsRequest {
+  string email = 1;
+}
+
+message IsUserExistsResponse {
+  bool exists = 1;
+}

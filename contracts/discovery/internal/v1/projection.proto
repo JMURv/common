@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package benito.discovery.internal.v1;
+
+enum ServerVisibility {
+  SERVER_VISIBILITY_UNSPECIFIED = 0;
+  SERVER_VISIBILITY_PRIVATE = 1;
+  SERVER_VISIBILITY_UNLISTED = 2;
+  SERVER_VISIBILITY_PUBLIC = 3;
+}
+
+enum ServerJoinPolicy {
+  SERVER_JOIN_POLICY_UNSPECIFIED = 0;
+  SERVER_JOIN_POLICY_INVITE_ONLY = 1;
+  SERVER_JOIN_POLICY_REQUEST = 2;
+  SERVER_JOIN_POLICY_INSTANT = 3;
+}
+
+enum ServerCatalogStatus {
+  SERVER_CATALOG_STATUS_UNSPECIFIED = 0;
+  SERVER_CATALOG_STATUS_DRAFT = 1;
+  SERVER_CATALOG_STATUS_PENDING_REVIEW = 2;
+  SERVER_CATALOG_STATUS_LISTED = 3;
+  SERVER_CATALOG_STATUS_REJECTED = 4;
+  SERVER_CATALOG_STATUS_SUSPENDED = 5;
+}
+
+message MediaObject {
+  string id = 1;
+  string bucket = 2;
+  string object_key = 3;
+  optional string content_type = 4;
+}
+
+message ServerDiscoveryDocument {
+  string server_id = 1;
+  uint64 catalog_version = 2;
+  ServerVisibility visibility = 3;
+  ServerJoinPolicy join_policy = 4;
+  ServerCatalogStatus catalog_status = 5;
+  string name = 6;
+  optional string description = 7;
+  repeated MediaObject avatar = 8;
+  optional string category_id = 9;
+  repeated string tag_ids = 10;
+  uint64 member_count = 11;
+  optional int64 published_at_unix_seconds = 12;
+  int64 updated_at_unix_seconds = 13;
+  uint64 member_capacity = 14;
+}
+
+message ServerDiscoveryProjectionEvent {
+  string event_id = 1;
+  string server_id = 2;
+  uint64 catalog_version = 3;
+  bool tombstone = 4;
+  optional ServerDiscoveryDocument document = 5;
+}
+
+message StickerCatalogDocument {
+  string pack_id = 1;
+  uint64 projection_version = 2;
+  uint64 pack_revision = 3;
+  string slug = 4;
+  string title = 5;
+  optional string description = 6;
+  repeated string emoji = 7;
+  bool official = 8;
+  uint32 sticker_count = 9;
+  uint64 subscriber_count = 10;
+  int64 created_at_unix_seconds = 11;
+  int64 updated_at_unix_seconds = 12;
+  optional int64 moderated_at_unix_seconds = 13;
+}
+
+message StickerCatalogProjectionEvent {
+  string event_id = 1;
+  string pack_id = 2;
+  uint64 projection_version = 3;
+  bool tombstone = 4;
+  optional StickerCatalogDocument document = 5;
+}
+
+message StreamDiscoverySnapshotRequest {
+  uint32 page_size = 1;
+}
+
+message RebuildDiscoveryIndexRequest {}
+
+message RebuildDiscoveryIndexResponse {
+  string index_name = 1;
+  uint64 document_count = 2;
+}
+
+message RebuildStickerIndexRequest {}
+
+message RebuildStickerIndexResponse {
+  string index_name = 1;
+  uint64 document_count = 2;
+}
+
+service DiscoverySnapshotSource {
+  rpc StreamSnapshot(StreamDiscoverySnapshotRequest)
+      returns (stream ServerDiscoveryProjectionEvent);
+  rpc StreamStickerSnapshot(StreamDiscoverySnapshotRequest)
+      returns (stream StickerCatalogProjectionEvent);
+}
+
+service DiscoveryMaintenance {
+  rpc RebuildIndex(RebuildDiscoveryIndexRequest)
+      returns (RebuildDiscoveryIndexResponse);
+  rpc RebuildStickerIndex(RebuildStickerIndexRequest)
+      returns (RebuildStickerIndexResponse);
+}

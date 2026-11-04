@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package benito.ai.internal.v1;
+
+import "ai/internal/v1/job.proto";
+import "ai/internal/v1/summary.proto";
+
+message DigestRoomInput {
+  optional string server_id = 1;
+  string room_id = 2;
+  uint64 from_sequence = 3;
+  uint64 to_sequence = 4;
+  int64 ranking_score = 5;
+  string overview = 6;
+  repeated SummaryItem important_discussions = 7;
+  repeated SummaryItem mentions = 8;
+  repeated SummaryItem urgent_questions = 9;
+  repeated SummaryItem missed_decisions = 10;
+  repeated SummaryItem action_items = 11;
+}
+
+message DigestRequested {
+  JobAttempt job = 1;
+  string snapshot_id = 2;
+  string user_id = 3;
+  repeated DigestRoomInput rooms = 4;
+}
+
+message DigestRoomResult {
+  string room_id = 1;
+  optional string overview = 2;
+  repeated SummaryItem important_discussions = 3;
+  repeated SummaryItem mentions = 4;
+  repeated SummaryItem urgent_questions = 5;
+  repeated SummaryItem missed_decisions = 6;
+  repeated SummaryItem action_items = 7;
+}
+
+message DigestCompleted {
+  string event_id = 1;
+  string job_id = 2;
+  string attempt_token = 3;
+  string snapshot_id = 4;
+  string source_revision = 5;
+  string model_revision = 6;
+  string overview = 7;
+  repeated DigestRoomResult rooms = 8;
+  int64 completed_at_unix_ms = 9;
+}
+
+message DigestFailed {
+  string event_id = 1;
+  string job_id = 2;
+  string attempt_token = 3;
+  string snapshot_id = 4;
+  string source_revision = 5;
+  string error_code = 6;
+  bool retryable = 7;
+  int64 failed_at_unix_ms = 8;
+}

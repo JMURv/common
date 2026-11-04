@@ -1,0 +1,315 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "public/v1/common.proto";
+import "public/v1/users.proto";
+
+service StickersService {
+  rpc ListMyStickerPacks(ListMyStickerPacksRequest) returns (ListStickerPacksResponse);
+  rpc ListServerStickerPacks(ListServerStickerPacksRequest) returns (ListStickerPacksResponse);
+  rpc SearchStickerPacks(SearchStickerPacksRequest) returns (ListStickerPacksResponse);
+  rpc GetStickerPack(GetStickerPackRequest) returns (StickerPack);
+  rpc AddStickerPack(AddStickerPackRequest) returns (StickerPackSubscription);
+  rpc RemoveStickerPack(RemoveStickerPackRequest) returns (Empty);
+  rpc ListRecentStickers(ListRecentStickersRequest) returns (ListStickersResponse);
+  rpc ListFavoriteStickers(ListFavoriteStickersRequest) returns (ListStickersResponse);
+  rpc SetStickerFavorite(SetStickerFavoriteRequest) returns (Empty);
+  rpc SendSticker(SendStickerRequest) returns (SentSticker);
+  rpc GetStickerPackModeration(GetStickerPackModerationRequest) returns (StickerPackModerationState);
+  rpc SubmitStickerPackForReview(SubmitStickerPackForReviewRequest) returns (StickerPackModerationState);
+  rpc ListStickerPackReviews(ListStickerPackReviewsRequest) returns (ListStickerPackReviewsResponse);
+  rpc ModerateStickerPack(ModerateStickerPackRequest) returns (StickerPackModerationState);
+  rpc ReportStickerPack(ReportStickerPackRequest) returns (Empty);
+  rpc GetStickerPackAppeal(GetStickerPackAppealRequest) returns (StickerPackAppeal);
+  rpc SubmitStickerPackAppeal(SubmitStickerPackAppealRequest) returns (StickerPackAppeal);
+  rpc ListStickerPackAppeals(ListStickerPackAppealsRequest) returns (ListStickerPackAppealsResponse);
+  rpc ResolveStickerPackAppeal(ResolveStickerPackAppealRequest) returns (StickerPackAppeal);
+}
+
+enum StickerPackOwnerKind {
+  STICKER_PACK_OWNER_KIND_UNSPECIFIED = 0;
+  STICKER_PACK_OWNER_KIND_USER = 1;
+  STICKER_PACK_OWNER_KIND_SERVER = 2;
+}
+
+enum StickerPackVisibility {
+  STICKER_PACK_VISIBILITY_UNSPECIFIED = 0;
+  STICKER_PACK_VISIBILITY_PRIVATE = 1;
+  STICKER_PACK_VISIBILITY_UNLISTED = 2;
+  STICKER_PACK_VISIBILITY_PUBLIC = 3;
+  STICKER_PACK_VISIBILITY_OFFICIAL = 4;
+}
+
+enum StickerFormat {
+  STICKER_FORMAT_UNSPECIFIED = 0;
+  STICKER_FORMAT_STATIC_WEBP = 1;
+  STICKER_FORMAT_ANIMATED_WEBM = 2;
+}
+
+enum StickerPackModerationStatus {
+  STICKER_PACK_MODERATION_STATUS_UNSPECIFIED = 0;
+  STICKER_PACK_MODERATION_STATUS_DRAFT = 1;
+  STICKER_PACK_MODERATION_STATUS_PENDING = 2;
+  STICKER_PACK_MODERATION_STATUS_APPROVED = 3;
+  STICKER_PACK_MODERATION_STATUS_REJECTED = 4;
+  STICKER_PACK_MODERATION_STATUS_BLOCKED = 5;
+}
+
+enum StickerPackModerationAction {
+  STICKER_PACK_MODERATION_ACTION_UNSPECIFIED = 0;
+  STICKER_PACK_MODERATION_ACTION_APPROVE = 1;
+  STICKER_PACK_MODERATION_ACTION_REJECT = 2;
+  STICKER_PACK_MODERATION_ACTION_BLOCK = 3;
+}
+
+enum StickerPackReportReason {
+  STICKER_PACK_REPORT_REASON_UNSPECIFIED = 0;
+  STICKER_PACK_REPORT_REASON_SPAM = 1;
+  STICKER_PACK_REPORT_REASON_ABUSE = 2;
+  STICKER_PACK_REPORT_REASON_SEXUAL_CONTENT = 3;
+  STICKER_PACK_REPORT_REASON_COPYRIGHT = 4;
+  STICKER_PACK_REPORT_REASON_OTHER = 5;
+}
+
+enum StickerPackAppealStatus {
+  STICKER_PACK_APPEAL_STATUS_UNSPECIFIED = 0;
+  STICKER_PACK_APPEAL_STATUS_PENDING = 1;
+  STICKER_PACK_APPEAL_STATUS_ACCEPTED = 2;
+  STICKER_PACK_APPEAL_STATUS_REJECTED = 3;
+}
+
+enum StickerPackAppealResolution {
+  STICKER_PACK_APPEAL_RESOLUTION_UNSPECIFIED = 0;
+  STICKER_PACK_APPEAL_RESOLUTION_ACCEPT = 1;
+  STICKER_PACK_APPEAL_RESOLUTION_REJECT = 2;
+}
+
+message StickerPackOwner {
+  StickerPackOwnerKind kind = 1;
+  string id = 2;
+}
+
+message Sticker {
+  string sticker_id = 1;
+  string pack_id = 2;
+  repeated string emoji = 3;
+  StickerFormat format = 4;
+  PublicMedia media = 5;
+  optional PublicMedia preview = 6;
+  uint32 position = 7;
+  bool available = 8;
+  uint64 revision = 9;
+  int64 updated_at_unix_ms = 10;
+}
+
+// Immutable snapshot stored with a message. It remains renderable when the
+// source sticker or pack is later hidden, removed, or revised.
+message StickerMessageProjection {
+  string sticker_id = 1;
+  string pack_id = 2;
+  string pack_slug = 3;
+  string pack_title = 4;
+  repeated string emoji = 5;
+  StickerFormat format = 6;
+  PublicMedia media = 7;
+  optional PublicMedia preview = 8;
+  uint64 revision = 9;
+}
+
+message StickerPackSummary {
+  string pack_id = 1;
+  string slug = 2;
+  string title = 3;
+  optional string description = 4;
+  StickerPackOwner owner = 5;
+  StickerPackVisibility visibility = 6;
+  optional Sticker cover = 7;
+  uint32 sticker_count = 8;
+  bool subscribed = 9;
+  bool editable = 10;
+  uint64 revision = 11;
+  int64 updated_at_unix_ms = 12;
+}
+
+message StickerPack {
+  StickerPackSummary summary = 1;
+  repeated Sticker stickers = 2;
+}
+
+message StickerPackSubscription {
+  string subscription_id = 1;
+  string pack_id = 2;
+  uint32 position = 3;
+  uint64 revision = 4;
+  int64 updated_at_unix_ms = 5;
+}
+
+message ListMyStickerPacksRequest {
+  optional string updated_after = 1;
+}
+
+message ListServerStickerPacksRequest {
+  string server_id = 1;
+  optional string updated_after = 2;
+}
+
+message SearchStickerPacksRequest {
+  string query = 1;
+  uint32 page_size = 2;
+  optional string page_token = 3;
+}
+
+message ListStickerPacksResponse {
+  repeated StickerPackSummary packs = 1;
+  optional PageInfo page = 2;
+}
+
+message GetStickerPackRequest {
+  string pack_id = 1;
+}
+
+message AddStickerPackRequest {
+  string pack_id = 1;
+  string idempotency_key = 2;
+}
+
+message RemoveStickerPackRequest {
+  string pack_id = 1;
+  string idempotency_key = 2;
+}
+
+message ListRecentStickersRequest {
+  uint32 limit = 1;
+}
+
+message ListFavoriteStickersRequest {
+  uint32 limit = 1;
+}
+
+message ListStickersResponse {
+  repeated Sticker stickers = 1;
+}
+
+message SetStickerFavoriteRequest {
+  string sticker_id = 1;
+  bool favorite = 2;
+  string idempotency_key = 3;
+}
+
+message SendStickerRequest {
+  string room_id = 1;
+  string sticker_id = 2;
+  optional string reply_to_message_id = 3;
+  string client_id = 4;
+  string idempotency_key = 5;
+}
+
+message SentSticker {
+  string message_id = 1;
+  string room_id = 2;
+  string sticker_id = 3;
+  int64 created_at_unix_ms = 4;
+}
+
+message StickerPackModerationState {
+  string pack_id = 1;
+  StickerPackModerationStatus status = 2;
+  optional string reason = 3;
+  uint64 revision = 4;
+  optional int64 submitted_at_unix_ms = 5;
+  optional int64 moderated_at_unix_ms = 6;
+}
+
+message GetStickerPackModerationRequest {
+  string pack_id = 1;
+}
+
+message SubmitStickerPackForReviewRequest {
+  string pack_id = 1;
+  uint64 expected_revision = 2;
+  string idempotency_key = 3;
+}
+
+message StickerPackReviewItem {
+  StickerPackSummary pack = 1;
+  StickerPackModerationState moderation = 2;
+  uint32 distinct_reporters_7d = 3;
+  optional int64 last_reported_at_unix_ms = 4;
+}
+
+message ListStickerPackReviewsRequest {
+  StickerPackModerationStatus status = 1;
+  uint32 page_size = 2;
+  optional string page_token = 3;
+  bool reported_only = 4;
+}
+
+message ListStickerPackReviewsResponse {
+  repeated StickerPackReviewItem reviews = 1;
+  optional PageInfo page = 2;
+}
+
+message ModerateStickerPackRequest {
+  string pack_id = 1;
+  StickerPackModerationAction action = 2;
+  uint64 expected_revision = 3;
+  optional string reason = 4;
+  string idempotency_key = 5;
+}
+
+message ReportStickerPackRequest {
+  string pack_id = 1;
+  StickerPackReportReason reason = 2;
+  optional string details = 3;
+  string idempotency_key = 4;
+}
+
+message StickerPackAppeal {
+  string appeal_id = 1;
+  string pack_id = 2;
+  string submitted_by_user_id = 3;
+  StickerPackAppealStatus status = 4;
+  string message = 5;
+  optional string resolution_reason = 6;
+  uint64 submitted_pack_revision = 7;
+  int64 created_at_unix_ms = 8;
+  optional int64 resolved_at_unix_ms = 9;
+  optional string resolved_by_user_id = 10;
+}
+
+message GetStickerPackAppealRequest {
+  string pack_id = 1;
+}
+
+message SubmitStickerPackAppealRequest {
+  string pack_id = 1;
+  uint64 expected_pack_revision = 2;
+  string message = 3;
+  string idempotency_key = 4;
+}
+
+message ListStickerPackAppealsRequest {
+  StickerPackAppealStatus status = 1;
+  uint32 page_size = 2;
+  optional string page_token = 3;
+}
+
+message ListStickerPackAppealsResponse {
+  repeated StickerPackAppealReviewItem appeals = 1;
+  optional PageInfo page = 2;
+}
+
+message StickerPackAppealReviewItem {
+  StickerPackAppeal appeal = 1;
+  StickerPackSummary pack = 2;
+  StickerPackModerationState moderation = 3;
+}
+
+message ResolveStickerPackAppealRequest {
+  string appeal_id = 1;
+  StickerPackAppealResolution resolution = 2;
+  string reason = 3;
+  uint64 expected_pack_revision = 4;
+  string idempotency_key = 5;
+}

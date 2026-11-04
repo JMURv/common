@@ -1,0 +1,290 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "public/v1/common.proto";
+import "public/v1/users.proto";
+
+service DiscoveryService {
+  rpc ListCategories(ListDiscoveryCategoriesRequest) returns (ListDiscoveryCategoriesResponse);
+  rpc ListFeed(ListDiscoveryFeedRequest) returns (ListDiscoveryFeedResponse);
+  rpc Search(SearchPublicServersRequest) returns (ListDiscoveryFeedResponse);
+  rpc GetPreview(GetServerPreviewRequest) returns (ServerPreview);
+  rpc Join(JoinPublicServerRequest) returns (JoinPublicServerResponse);
+  rpc CancelJoinRequest(CancelServerJoinRequestRequest) returns (Empty);
+  rpc ListJoinRequests(ListServerJoinRequestsRequest) returns (ListServerJoinRequestsResponse);
+  rpc ResolveJoinRequest(ResolveServerJoinRequestRequest) returns (ServerJoinRequest);
+  rpc ReportServer(ReportPublicServerRequest) returns (Empty);
+  rpc TrackEvents(TrackDiscoveryEventsRequest) returns (Empty);
+  rpc ListCatalogReviews(ListCatalogReviewsRequest) returns (ListCatalogReviewsResponse);
+  rpc ModerateCatalogServer(ModerateCatalogServerRequest) returns (CatalogReviewItem);
+}
+
+enum DiscoveryFeed {
+  DISCOVERY_FEED_UNSPECIFIED = 0;
+  DISCOVERY_FEED_RECOMMENDED = 1;
+  DISCOVERY_FEED_TRENDING = 2;
+  DISCOVERY_FEED_NEW = 3;
+}
+
+enum ServerVisibility {
+  SERVER_VISIBILITY_UNSPECIFIED = 0;
+  SERVER_VISIBILITY_PRIVATE = 1;
+  SERVER_VISIBILITY_UNLISTED = 2;
+  SERVER_VISIBILITY_PUBLIC = 3;
+}
+
+enum ServerJoinPolicy {
+  SERVER_JOIN_POLICY_UNSPECIFIED = 0;
+  SERVER_JOIN_POLICY_INVITE_ONLY = 1;
+  SERVER_JOIN_POLICY_REQUEST = 2;
+  SERVER_JOIN_POLICY_INSTANT = 3;
+}
+
+enum ServerCatalogStatus {
+  SERVER_CATALOG_STATUS_UNSPECIFIED = 0;
+  SERVER_CATALOG_STATUS_DRAFT = 1;
+  SERVER_CATALOG_STATUS_PENDING_REVIEW = 2;
+  SERVER_CATALOG_STATUS_LISTED = 3;
+  SERVER_CATALOG_STATUS_REJECTED = 4;
+  SERVER_CATALOG_STATUS_SUSPENDED = 5;
+}
+
+enum JoinPublicServerOutcome {
+  JOIN_PUBLIC_SERVER_OUTCOME_UNSPECIFIED = 0;
+  JOIN_PUBLIC_SERVER_OUTCOME_JOINED = 1;
+  JOIN_PUBLIC_SERVER_OUTCOME_REQUEST_CREATED = 2;
+  JOIN_PUBLIC_SERVER_OUTCOME_ALREADY_JOINED = 3;
+  JOIN_PUBLIC_SERVER_OUTCOME_ALREADY_REQUESTED = 4;
+  JOIN_PUBLIC_SERVER_OUTCOME_UNAVAILABLE = 5;
+  JOIN_PUBLIC_SERVER_OUTCOME_CAPACITY_REACHED = 6;
+}
+
+enum DiscoveryEventType {
+  DISCOVERY_EVENT_TYPE_UNSPECIFIED = 0;
+  DISCOVERY_EVENT_TYPE_IMPRESSION = 1;
+  DISCOVERY_EVENT_TYPE_CLICK = 2;
+}
+
+enum CatalogModerationAction {
+  CATALOG_MODERATION_ACTION_UNSPECIFIED = 0;
+  CATALOG_MODERATION_ACTION_APPROVE = 1;
+  CATALOG_MODERATION_ACTION_REJECT = 2;
+  CATALOG_MODERATION_ACTION_SUSPEND = 3;
+  CATALOG_MODERATION_ACTION_REQUEST_REREVIEW = 4;
+}
+
+message DiscoveryCategory {
+  string id = 1;
+  string slug = 2;
+  string name = 3;
+  uint32 position = 4;
+}
+
+message DiscoveryTag {
+  string id = 1;
+  string slug = 2;
+  string name = 3;
+}
+
+message PublicServerCard {
+  string id = 1;
+  string name = 2;
+  optional string description = 3;
+  repeated PublicMedia avatar = 4;
+  optional DiscoveryCategory category = 5;
+  repeated DiscoveryTag tags = 6;
+  uint64 member_count = 7;
+  uint64 active_users_7d = 8;
+  ServerJoinPolicy join_policy = 9;
+  bool verified = 10;
+  bool featured = 11;
+  int64 published_at_unix_seconds = 12;
+  int64 updated_at_unix_seconds = 13;
+  uint64 member_capacity = 14;
+}
+
+message PreviewRoom {
+  string id = 1;
+  string name = 2;
+  optional string description = 3;
+}
+
+message ServerPreview {
+  PublicServerCard server = 1;
+  repeated PreviewRoom rooms = 2;
+  optional string public_rules = 3;
+  optional string join_request_id = 4;
+}
+
+message ServerDiscoverySettings {
+  string server_id = 1;
+  ServerVisibility visibility = 2;
+  ServerJoinPolicy join_policy = 3;
+  ServerCatalogStatus catalog_status = 4;
+  optional string category_id = 5;
+  repeated string tag_ids = 6;
+  uint64 catalog_version = 7;
+  optional int64 published_at_unix_seconds = 8;
+  int64 updated_at_unix_seconds = 9;
+  optional string public_rules = 10;
+  repeated string preview_room_ids = 11;
+  uint64 member_count = 12;
+  uint64 member_capacity = 13;
+}
+
+message UpdateServerDiscoverySettingsRequest {
+  string server_id = 1;
+  ServerVisibility visibility = 2;
+  ServerJoinPolicy join_policy = 3;
+  optional string category_id = 4;
+  repeated string tag_ids = 5;
+  optional string public_rules = 6;
+  repeated string preview_room_ids = 7;
+  uint64 expected_catalog_version = 8;
+  uint64 member_capacity = 9;
+}
+
+message ListDiscoveryCategoriesRequest {}
+message ListDiscoveryCategoriesResponse {
+  repeated DiscoveryCategory categories = 1;
+  repeated DiscoveryTag tags = 2;
+}
+
+message ListDiscoveryFeedRequest {
+  DiscoveryFeed feed = 1;
+  optional string category_id = 2;
+  repeated string tag_ids = 3;
+  optional string cursor = 4;
+  uint32 page_size = 5;
+  string session_id = 6;
+}
+
+message SearchPublicServersRequest {
+  string query = 1;
+  optional string category_id = 2;
+  repeated string tag_ids = 3;
+  optional string cursor = 4;
+  uint32 page_size = 5;
+  string session_id = 6;
+}
+
+message ListDiscoveryFeedResponse {
+  repeated PublicServerCard servers = 1;
+  optional string next_cursor = 2;
+  string rank_epoch = 3;
+}
+
+message GetServerPreviewRequest {
+  string server_id = 1;
+}
+
+message JoinPublicServerRequest {
+  string server_id = 1;
+  optional string message = 2;
+}
+
+message JoinPublicServerResponse {
+  JoinPublicServerOutcome outcome = 1;
+  optional string request_id = 2;
+  optional JoinedServerProjection server = 3;
+}
+
+message JoinedServerProjection {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  optional string description = 4;
+  repeated PublicMedia avatar = 5;
+  string type = 6;
+  bool pinned = 7;
+  bool has_unread = 8;
+  int64 created_at_unix_seconds = 9;
+  int64 updated_at_unix_seconds = 10;
+}
+
+message CancelServerJoinRequestRequest {
+  string request_id = 1;
+}
+
+message ServerJoinRequest {
+  string id = 1;
+  string server_id = 2;
+  string user_id = 3;
+  string status = 4;
+  optional string message = 5;
+  int64 created_at_unix_seconds = 6;
+  int64 updated_at_unix_seconds = 7;
+}
+
+message ListServerJoinRequestsRequest {
+  string server_id = 1;
+  optional string cursor = 2;
+  uint32 page_size = 3;
+}
+
+message ListServerJoinRequestsResponse {
+  repeated ServerJoinRequest requests = 1;
+  optional string next_cursor = 2;
+}
+
+message ResolveServerJoinRequestRequest {
+  string request_id = 1;
+  bool approve = 2;
+  optional string reason = 3;
+}
+
+message ReportPublicServerRequest {
+  string server_id = 1;
+  string reason = 2;
+  optional string details = 3;
+}
+
+message DiscoveryEvent {
+  string event_id = 1;
+  string session_id = 2;
+  string server_id = 3;
+  DiscoveryEventType type = 4;
+  DiscoveryFeed feed = 5;
+  uint32 position = 6;
+  string rank_epoch = 7;
+  int64 occurred_at_unix_millis = 8;
+}
+
+message TrackDiscoveryEventsRequest {
+  repeated DiscoveryEvent events = 1;
+}
+
+message CatalogReviewItem {
+  string server_id = 1;
+  string owner_id = 2;
+  string name = 3;
+  optional string description = 4;
+  ServerCatalogStatus status = 5;
+  optional string status_reason = 6;
+  optional string category_id = 7;
+  repeated string tag_ids = 8;
+  uint64 catalog_version = 9;
+  uint64 distinct_reports_7d = 10;
+  uint64 trusted_reports_7d = 11;
+  int64 submitted_at_unix_seconds = 12;
+  int64 updated_at_unix_seconds = 13;
+}
+
+message ListCatalogReviewsRequest {
+  ServerCatalogStatus status = 1;
+  optional string cursor = 2;
+  uint32 page_size = 3;
+}
+
+message ListCatalogReviewsResponse {
+  repeated CatalogReviewItem items = 1;
+  optional string next_cursor = 2;
+}
+
+message ModerateCatalogServerRequest {
+  string server_id = 1;
+  CatalogModerationAction action = 2;
+  optional string reason = 3;
+  uint64 expected_catalog_version = 4;
+}

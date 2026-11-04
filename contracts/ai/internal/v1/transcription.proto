@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package benito.ai.internal.v1;
+
+import "ai/internal/v1/job.proto";
+
+enum TranscriptionSourceKind {
+  TRANSCRIPTION_SOURCE_KIND_UNSPECIFIED = 0;
+  TRANSCRIPTION_SOURCE_KIND_MESSAGE = 1;
+  TRANSCRIPTION_SOURCE_KIND_CALL_RECORDING = 2;
+}
+
+message TranscriptionRequested {
+  JobAttempt job = 1;
+  TranscriptionSourceKind source_kind = 2;
+  string source_id = 3;
+  string media_id = 4;
+  optional string language = 5;
+}
+
+message TranscriptionSegment {
+  uint64 start_ms = 1;
+  uint64 end_ms = 2;
+  string text = 3;
+  optional float confidence = 4;
+}
+
+message TranscriptionCompleted {
+  string event_id = 1;
+  string job_id = 2;
+  string attempt_token = 3;
+  string source_revision = 4;
+  string model_revision = 5;
+  string text = 6;
+  optional string detected_language = 7;
+  repeated TranscriptionSegment segments = 8;
+  int64 completed_at_unix_ms = 9;
+}
+
+message TranscriptionFailed {
+  string event_id = 1;
+  string job_id = 2;
+  string attempt_token = 3;
+  string source_revision = 4;
+  string error_code = 5;
+  bool retryable = 6;
+  int64 failed_at_unix_ms = 7;
+}

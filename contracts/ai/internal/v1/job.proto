@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package benito.ai.internal.v1;
+
+enum ModelPolicy {
+  MODEL_POLICY_UNSPECIFIED = 0;
+  MODEL_POLICY_DEPLOYMENT_DEFAULT = 1;
+  MODEL_POLICY_LOCAL_ONLY = 2;
+  MODEL_POLICY_EXTERNAL_ALLOWED = 3;
+}
+
+message JobAttempt {
+  string event_id = 1;
+  string job_id = 2;
+  string source_revision = 3;
+  ModelPolicy model_policy = 4;
+  uint32 attempt = 5;
+  string attempt_token = 6;
+  int64 requested_at_unix_ms = 7;
+  optional int64 deadline_unix_ms = 8;
+}

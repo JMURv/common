@@ -1,0 +1,55 @@
+syntax = "proto3";
+package role;
+
+import "google/protobuf/timestamp.proto";
+
+service RoleService {
+  rpc GetRole(GetRoleRequest) returns(Role);
+  rpc CreateRole(CreateRoleRequest) returns(CreateRoleResponse);
+  rpc UpdateRole(UpdateRoleRequest) returns(UpdateRoleResponse);
+  rpc DeleteRole(DeleteRoleRequest) returns(DeleteRoleResponse);
+  rpc ToggleRoleForUser(ToggleRoleForUserRequest) returns(ToggleRoleForUserResponse);
+}
+
+message Role {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message GetRoleRequest {
+  string id = 1;
+  string name = 2;
+}
+
+message CreateRoleRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message CreateRoleResponse {
+  string id = 1;
+}
+
+message UpdateRoleRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message UpdateRoleResponse {}
+
+message DeleteRoleRequest {
+  string id = 1;
+}
+
+message DeleteRoleResponse {}
+
+message ToggleRoleForUserRequest {
+  string role_name = 1;
+  string user_id = 2;
+}
+
+message ToggleRoleForUserResponse {}

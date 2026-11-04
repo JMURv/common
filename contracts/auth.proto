@@ -1,0 +1,244 @@
+syntax = "proto3";
+package auth;
+
+import "google/protobuf/timestamp.proto";
+
+service AuthService {
+  // Public
+  rpc Refresh(RefreshRequest) returns(AuthenticateResponse);
+  rpc SendAuthEmailCode(SendAuthEmailCodeRequest) returns(SendAuthEmailCodeResponse);
+  rpc CheckAuthEmailCode(CheckAuthEmailCodeRequest) returns(AuthenticateResponse);
+  rpc StartExternalLogin(ExternalLoginStartRequest) returns(ExternalLoginStartResponse);
+  rpc CompleteExternalLogin(ExternalLoginCompleteRequest) returns(OAuthAuthenticateResponse);
+  rpc StartNativeExternalLogin(NativeExternalLoginStartRequest) returns(ExternalLoginStartResponse);
+  rpc CompleteNativeExternalLogin(NativeExternalLoginCompleteRequest) returns(NativeExternalLoginTicketResponse);
+  rpc ExchangeNativeExternalLogin(NativeExternalLoginExchangeRequest) returns(OAuthAuthenticateResponse);
+  rpc ListLoginMethods(LoginMethodsRequest) returns(LoginMethodsResponse);
+  rpc BeginPasskeyAuthentication(BeginPasskeyAuthenticationRequest) returns(PasskeyCeremonyResponse);
+  rpc FinishPasskeyAuthentication(FinishPasskeyAuthenticationRequest) returns(AuthenticateResponse);
+  rpc SendActivationEmail(SendActivationEmailRequest) returns(Empty);
+  rpc CheckActivationEmail(CheckActivationEmailRequest) returns(Empty);
+  rpc SendResetCode(SendResetCodeRequest) returns(Empty);
+  rpc CheckResetCode(CheckResetCodeRequest) returns(Empty);
+
+  // Protected
+  rpc Logout(LogoutRequest) returns(Empty);
+  rpc LogoutFromDevice(LogoutFromDeviceRequest) returns(LogoutFromDeviceResponse);
+  rpc LogoutFromAll(Empty) returns(Empty);
+  rpc SendChangeEmail(SendChangeEmailRequest) returns(Empty);
+  rpc CheckChangeEmail(CheckChangeEmailRequest) returns(Empty);
+  rpc ListOAuthConnections(Empty) returns(OAuthConnectionsResponse);
+  rpc StartExternalLink(ExternalLoginStartRequest) returns(ExternalLoginStartResponse);
+  rpc CompleteExternalLink(ExternalLoginCompleteRequest) returns(ExternalLinkCompleteResponse);
+  rpc BeginPasskeyRegistration(Empty) returns(PasskeyCeremonyResponse);
+  rpc FinishPasskeyRegistration(FinishPasskeyRegistrationRequest) returns(PasskeyCredential);
+  rpc ListPasskeys(Empty) returns(PasskeyCredentialsResponse);
+  rpc RevokePasskey(RevokePasskeyRequest) returns(Empty);
+
+  // Admin
+}
+
+message Empty {}
+
+message LoginMethodsRequest {
+}
+
+message LoginProvider {
+  string slug = 1;
+  string display_name = 2;
+}
+
+message LoginMethodsResponse {
+  repeated LoginProvider providers = 5;
+  repeated LegalDocument legal_documents = 7;
+}
+
+message LegalDocument {
+  string kind = 1;
+  string version = 2;
+  string title = 3;
+  string route = 4;
+}
+
+message BeginPasskeyAuthenticationRequest {
+  string email = 1;
+}
+
+message PasskeyCeremonyResponse {
+  string ceremony_id = 1;
+  string options_json = 2;
+  int64 expires_at_unix_seconds = 3;
+}
+
+message FinishPasskeyAuthenticationRequest {
+  string ceremony_id = 1;
+  string response_json = 2;
+  IPUA device = 3;
+}
+
+message FinishPasskeyRegistrationRequest {
+  string ceremony_id = 1;
+  string response_json = 2;
+  string label = 3;
+}
+
+message PasskeyCredential {
+  string id = 1;
+  string label = 2;
+  int64 created_at_unix_seconds = 3;
+  optional int64 last_used_at_unix_seconds = 4;
+}
+
+message PasskeyCredentialsResponse {
+  repeated PasskeyCredential passkeys = 1;
+}
+
+message RevokePasskeyRequest {
+  string passkey_id = 1;
+}
+
+message IPUA {
+  string ip = 1;
+  string ua = 2;
+}
+
+message AuthenticateResponse {
+  string access = 1;
+  uint64 access_max_age = 2;
+  string refresh = 3;
+  uint64 refresh_max_age = 4;
+}
+
+message RefreshRequest {
+  string refresh = 1;
+  IPUA device = 2;
+}
+
+message SendAuthEmailCodeRequest {
+  string email = 1;
+  string password = 2;
+  IPUA device = 3;
+}
+
+message SendAuthEmailCodeResponse {
+  bool known_device = 1;
+  optional AuthenticateResponse auth = 2;
+}
+
+message CheckAuthEmailCodeRequest {
+  string email = 1;
+  string otp = 2;
+  IPUA device = 3;
+  bool remember_me = 4;
+}
+
+message SendResetCodeRequest {
+  string email = 1;
+}
+
+message CheckResetCodeRequest {
+  string uid = 1;
+  string code = 2;
+  string password = 3;
+}
+
+message SendActivationEmailRequest {
+  string email = 1;
+}
+
+message CheckActivationEmailRequest {
+  string email = 1;
+  string code = 2;
+}
+
+message LogoutRequest {
+  IPUA device = 1;
+}
+
+message LogoutFromDeviceRequest{
+  string device_id = 1;
+  IPUA device = 2;
+}
+
+message LogoutFromDeviceResponse {
+  string device_id = 1;
+}
+
+message SendChangeEmailRequest {
+  string email = 1;
+}
+
+message CheckChangeEmailRequest {
+  string email = 1;
+  string id = 2;
+  string code = 3;
+}
+
+
+message ExternalLoginStartRequest {
+  string provider = 1;
+  string redirect_uri = 2;
+  string return_to = 3;
+  IPUA device = 4;
+}
+
+message ExternalLoginStartResponse {
+  string authorization_url = 1;
+  string state = 2;
+  uint64 expires_in_seconds = 3;
+}
+
+message ExternalLoginCompleteRequest {
+  string provider = 1;
+  string state = 2;
+  string code = 3;
+  optional string provider_device_id = 4;
+  IPUA device = 5;
+}
+
+message NativeExternalLoginStartRequest {
+  string provider = 1;
+  string redirect_uri = 2;
+  string exchange_challenge = 3;
+  IPUA device = 4;
+}
+
+message NativeExternalLoginCompleteRequest {
+  string provider = 1;
+  string state = 2;
+  string code = 3;
+  optional string provider_device_id = 4;
+}
+
+message NativeExternalLoginTicketResponse {
+  string ticket = 1;
+  uint64 expires_in_seconds = 2;
+}
+
+message NativeExternalLoginExchangeRequest {
+  string ticket = 1;
+  string exchange_verifier = 2;
+}
+
+message OAuthAuthenticateResponse {
+  AuthenticateResponse auth = 1;
+  string user_id = 2;
+  string email = 3;
+  string name = 4;
+  bool inserted = 5;
+  string return_to = 6;
+}
+
+message OAuthConnection {
+  string provider = 1;
+  google.protobuf.Timestamp connected_at = 2;
+}
+
+message OAuthConnectionsResponse {
+  repeated OAuthConnection connections = 1;
+}
+
+message ExternalLinkCompleteResponse {
+  OAuthConnection connection = 1;
+  string return_to = 2;
+}

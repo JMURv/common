@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "public/v1/common.proto";
+import "public/v1/users.proto";
+
+service NotificationsService {
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc ReadNotification(NotificationIdRequest) returns (Empty);
+  rpc ReadAllNotifications(Empty) returns (Empty);
+  rpc DeleteNotification(NotificationIdRequest) returns (Empty);
+  rpc DeleteAllNotifications(Empty) returns (Empty);
+  rpc GetNotificationPreferences(Empty) returns (NotificationPreferences);
+  rpc UpdateNotificationPreferences(UpdateNotificationPreferencesRequest) returns (NotificationPreferences);
+}
+
+enum NotificationKind {
+  NOTIFICATION_KIND_UNSPECIFIED = 0;
+  NOTIFICATION_KIND_FRIEND_REQUEST = 1;
+  NOTIFICATION_KIND_FRIEND_REQUEST_ACCEPTED = 2;
+  NOTIFICATION_KIND_MESSAGE = 3;
+  NOTIFICATION_KIND_MENTION = 4;
+  NOTIFICATION_KIND_SERVER_JOIN_REQUEST = 5;
+  NOTIFICATION_KIND_SERVER_JOIN_REQUEST_APPROVED = 6;
+  NOTIFICATION_KIND_SERVER_JOIN_REQUEST_REJECTED = 7;
+}
+
+message NotificationData {
+  optional string actor_id = 1;
+  optional string user_id = 2;
+  optional string name = 3;
+  repeated PublicMedia media = 4;
+  optional string avatar_color = 5;
+  optional string message = 6;
+  optional string friendship_status = 7;
+  optional string room_id = 8;
+  optional string msg_id = 9;
+  optional string server_id = 10;
+  optional string request_id = 11;
+  optional bool approved = 12;
+  optional string reason = 13;
+}
+
+message PublicNotification {
+  string id = 1;
+  NotificationKind kind = 2;
+  NotificationData data = 3;
+  bool is_read = 4;
+  int64 created_at_unix_seconds = 5;
+}
+
+message ListNotificationsRequest {
+  uint32 page = 1;
+  uint32 page_size = 2;
+}
+
+message ListNotificationsResponse {
+  repeated PublicNotification notifications = 1;
+  uint32 current_page = 2;
+  bool has_next_page = 3;
+}
+
+message NotificationIdRequest {
+  string notification_id = 1;
+}
+
+message NotificationPreferences {
+  bool email_notifications_enabled = 1;
+  bool mention_notifications_enabled = 2;
+  int64 updated_at_unix_seconds = 3;
+}
+
+message UpdateNotificationPreferencesRequest {
+  bool email_notifications_enabled = 1;
+  bool mention_notifications_enabled = 2;
+}

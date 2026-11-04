@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package benito.media.internal.v1;
+
+service MediaMaterializationService {
+  rpc RequestMaterialization(RequestMaterializationRequest) returns (MediaMaterialization);
+  rpc GetMaterialization(GetMaterializationRequest) returns (MediaMaterialization);
+  rpc DeleteMaterialization(DeleteMaterializationRequest) returns (DeleteMaterializationResponse);
+  rpc DeleteRecordingSource(DeleteRecordingSourceRequest) returns (DeleteRecordingSourceResponse);
+}
+
+message RequestMaterializationRequest {
+  string operation_id = 1;
+  string source_prefix = 2;
+  uint64 start_offset_ms = 3;
+  uint64 end_offset_ms = 4;
+  string reference_namespace = 5;
+  string reference_id = 6;
+}
+
+message GetMaterializationRequest {
+  string operation_id = 1;
+}
+
+message DeleteMaterializationRequest {
+  string operation_id = 1;
+}
+
+message DeleteMaterializationResponse {
+  bool deleted = 1;
+}
+
+message DeleteRecordingSourceRequest {
+  string operation_id = 1;
+  string source_prefix = 2;
+}
+
+message DeleteRecordingSourceResponse {
+  uint64 deleted_objects = 1;
+}
+
+enum MediaMaterializationStatus {
+  MEDIA_MATERIALIZATION_STATUS_UNSPECIFIED = 0;
+  MEDIA_MATERIALIZATION_STATUS_QUEUED = 1;
+  MEDIA_MATERIALIZATION_STATUS_PROCESSING = 2;
+  MEDIA_MATERIALIZATION_STATUS_READY = 3;
+  MEDIA_MATERIALIZATION_STATUS_FAILED = 4;
+  MEDIA_MATERIALIZATION_STATUS_DELETED = 5;
+}
+
+message MediaMaterialization {
+  string operation_id = 1;
+  MediaMaterializationStatus status = 2;
+  optional string media_id = 3;
+  optional string failure_code = 4;
+  optional string failure_message = 5;
+  int64 updated_at_unix_ms = 6;
+  optional uint64 size_bytes = 7;
+}

@@ -1,0 +1,332 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "public/v1/common.proto";
+
+service UsersService {
+  rpc RegisterUser(RegisterUserRequest) returns (User);
+  rpc GetMe(Empty) returns (User);
+  rpc GetUser(GetUserRequest) returns (User);
+  rpc SearchUsers(SearchUsersRequest) returns (ListUsersResponse);
+  rpc ListSuggestions(ListUsersRequest) returns (ListUsersResponse);
+  rpc UserExists(UserExistsRequest) returns (UserExistsResponse);
+  rpc ReportUser(ReportUserRequest) returns (Empty);
+  rpc ListBlocked(ListUsersRequest) returns (ListUsersResponse);
+  rpc ToggleBlock(ToggleUserRequest) returns (Empty);
+  rpc UpdateMe(UpdateMeRequest) returns (Empty);
+  rpc GetHotkeyScheme(Empty) returns (HotkeyScheme);
+  rpc UpdateHotkeyScheme(UpdateHotkeySchemeRequest) returns (HotkeyScheme);
+  rpc GetDigestPreferences(Empty) returns (DigestPreferences);
+  rpc UpdateDigestPreferences(UpdateDigestPreferencesRequest) returns (DigestPreferences);
+  rpc GetUnreadSummary(GetUnreadSummaryRequest) returns (UnreadSummary);
+  rpc DeleteMe(Empty) returns (Empty);
+}
+
+message GetUnreadSummaryRequest {
+  string idempotency_key = 1;
+}
+
+enum DigestPriority {
+  DIGEST_PRIORITY_UNSPECIFIED = 0;
+  DIGEST_PRIORITY_OFF = 1;
+  DIGEST_PRIORITY_NORMAL = 2;
+  DIGEST_PRIORITY_HIGH = 3;
+}
+
+message DigestPreferences {
+  uint64 revision = 1;
+  DigestPriority direct_messages = 2;
+  DigestPriority mentions = 3;
+  DigestPriority replies = 4;
+  DigestPriority activity = 5;
+  DigestPriority freshness = 6;
+  uint32 max_rooms = 7;
+  int64 updated_at_unix_ms = 8;
+}
+
+message UpdateDigestPreferencesRequest {
+  uint64 expected_revision = 1;
+  DigestPriority direct_messages = 2;
+  DigestPriority mentions = 3;
+  DigestPriority replies = 4;
+  DigestPriority activity = 5;
+  DigestPriority freshness = 6;
+  uint32 max_rooms = 7;
+}
+
+enum UnreadSummaryStatus {
+  UNREAD_SUMMARY_STATUS_UNSPECIFIED = 0;
+  UNREAD_SUMMARY_STATUS_QUEUED = 1;
+  UNREAD_SUMMARY_STATUS_PROCESSING = 2;
+  UNREAD_SUMMARY_STATUS_READY = 3;
+  UNREAD_SUMMARY_STATUS_FAILED_RETRYABLE = 4;
+  UNREAD_SUMMARY_STATUS_FAILED_TERMINAL = 5;
+  UNREAD_SUMMARY_STATUS_CANCELLED = 6;
+}
+
+message UnreadSummarySource {
+  optional string server_id = 1;
+  string room_id = 2;
+  string message_id = 3;
+  uint64 room_sequence = 4;
+}
+
+message UnreadSummaryItem {
+  string text = 1;
+  repeated UnreadSummarySource sources = 2;
+}
+
+message UnreadRoomSummary {
+  string room_id = 1;
+  uint64 from_sequence = 2;
+  uint64 to_sequence = 3;
+  optional string overview = 4;
+  repeated UnreadSummaryItem important_discussions = 5;
+  repeated UnreadSummaryItem mentions = 6;
+  repeated UnreadSummaryItem urgent_questions = 7;
+  repeated UnreadSummaryItem missed_decisions = 8;
+  repeated UnreadSummaryItem action_items = 9;
+}
+
+message UnreadServerSummary {
+  string server_id = 1;
+  repeated UnreadRoomSummary rooms = 2;
+}
+
+message UnreadSummary {
+  string snapshot_id = 1;
+  UnreadSummaryStatus status = 2;
+  optional string overview = 3;
+  repeated UnreadServerSummary servers = 4;
+  repeated UnreadRoomSummary direct_rooms = 5;
+  optional string model_revision = 6;
+  optional string error_code = 7;
+  bool retryable = 8;
+  int64 updated_at_unix_ms = 9;
+}
+
+message HotkeyBinding {
+  string action_id = 1;
+  string chord = 2;
+}
+
+message HotkeyScheme {
+  uint32 schema_version = 1;
+  uint64 revision = 2;
+  repeated HotkeyBinding bindings = 3;
+  int64 updated_at_unix_seconds = 4;
+}
+
+message UpdateHotkeySchemeRequest {
+  uint32 schema_version = 1;
+  uint64 expected_revision = 2;
+  repeated HotkeyBinding bindings = 3;
+}
+
+message RegisterUserRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+  string user_agreement_version = 4;
+  string personal_data_consent_version = 5;
+}
+
+service FriendsService {
+  rpc ListFriends(ListFriendsRequest) returns (ListUsersResponse);
+  rpc ListMutual(ListMutualRequest) returns (ListMutualResponse);
+  rpc SendRequest(ToggleUserRequest) returns (Empty);
+  rpc UpdateRequest(UpdateFriendRequest) returns (Empty);
+  rpc RemoveFriend(UpdateFriendRequest) returns (Empty);
+}
+
+message PublicMedia {
+  string id = 1;
+  reserved 2, 3;
+  reserved "bucket", "object_key";
+  string purpose = 4;
+  optional string content_type = 5;
+  string revision = 6;
+  PublicMediaFacts facts = 7;
+  repeated PublicMediaRepresentation representations = 8;
+  optional PublicMediaResource original = 9;
+}
+
+message PublicMediaFacts {
+  optional int32 width = 1;
+  optional int32 height = 2;
+  optional int64 duration_ms = 3;
+  optional string video_codec = 4;
+  bool supports_streaming = 5;
+}
+
+message PublicMediaResource {
+  string id = 1;
+  string revision = 2;
+  int64 size = 3;
+  optional string content_type = 4;
+  PublicMediaFacts facts = 5;
+  optional string read_url = 6;
+  // Deprecated compatibility slot. Stable media routes do not expire and new
+  // clients must ignore this field.
+  optional int64 expires_at_unix_seconds = 7;
+}
+
+enum PublicMediaProfile {
+  PUBLIC_MEDIA_PROFILE_UNSPECIFIED = 0;
+  PUBLIC_MEDIA_PROFILE_IMAGE_MINI = 1;
+  PUBLIC_MEDIA_PROFILE_IMAGE_THUMBNAIL = 2;
+  PUBLIC_MEDIA_PROFILE_IMAGE_DISPLAY = 3;
+  PUBLIC_MEDIA_PROFILE_VIDEO_POSTER = 4;
+  PUBLIC_MEDIA_PROFILE_VIDEO_PLAYBACK_480 = 5;
+  PUBLIC_MEDIA_PROFILE_VIDEO_PLAYBACK_720 = 6;
+  PUBLIC_MEDIA_PROFILE_ANIMATED_REACTION = 7;
+  PUBLIC_MEDIA_PROFILE_VIDEO_STORYBOARD = 8;
+  PUBLIC_MEDIA_PROFILE_STICKER_STATIC_WEBP = 10;
+  PUBLIC_MEDIA_PROFILE_STICKER_ANIMATED_WEBM = 11;
+  PUBLIC_MEDIA_PROFILE_STICKER_ANIMATED_MP4 = 12;
+  PUBLIC_MEDIA_PROFILE_STICKER_POSTER = 13;
+}
+
+enum PublicMediaRepresentationState {
+  PUBLIC_MEDIA_REPRESENTATION_STATE_UNSPECIFIED = 0;
+  PUBLIC_MEDIA_REPRESENTATION_STATE_PENDING = 1;
+  PUBLIC_MEDIA_REPRESENTATION_STATE_PROCESSING = 2;
+  PUBLIC_MEDIA_REPRESENTATION_STATE_READY = 3;
+  PUBLIC_MEDIA_REPRESENTATION_STATE_FAILED = 4;
+}
+
+message PublicMediaRepresentation {
+  PublicMediaProfile profile = 1;
+  int32 profile_version = 2;
+  PublicMediaRepresentationState state = 3;
+  optional PublicMediaResource output = 4;
+  bytes inline_minithumbnail = 5;
+  optional PublicMediaStoryboard storyboard = 6;
+}
+
+message PublicMediaStoryboard {
+  int32 frame_width = 1;
+  int32 frame_height = 2;
+  int32 columns = 3;
+  repeated int64 frame_times_ms = 4;
+}
+
+message PublicMediaList {
+  repeated PublicMedia items = 1;
+}
+
+enum UserPresenceStatus {
+  USER_PRESENCE_STATUS_UNSPECIFIED = 0;
+  USER_PRESENCE_STATUS_ONLINE = 1;
+  USER_PRESENCE_STATUS_OFFLINE = 2;
+  USER_PRESENCE_STATUS_AWAY = 3;
+  USER_PRESENCE_STATUS_DO_NOT_DISTURB = 4;
+}
+
+message UpdateMeRequest {
+  optional string name = 1;
+  PublicMediaList media = 2;
+  optional string avatar_color = 3;
+  optional string cover_color = 4;
+  optional UserPresenceStatus status = 5;
+  optional bool manual_status = 6;
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string status = 3;
+  bool manual_status = 4;
+  string email = 5;
+  repeated PublicMedia media = 6;
+  optional string avatar_color = 7;
+  optional string cover_color = 8;
+  int64 created_at_unix_seconds = 9;
+  int64 updated_at_unix_seconds = 10;
+  optional string friendship_status = 11;
+  optional string friendship_direction = 12;
+  optional int64 friendship_since_unix_seconds = 13;
+  optional string friend_code = 14;
+  optional bool blacklisted = 15;
+  optional UserCapabilities capabilities = 16;
+}
+
+message UserCapabilities {
+  bool moderate_sticker_catalog = 1;
+  reserved 2;
+  reserved "moderate_bot_catalog";
+}
+
+message ListUsersRequest {
+  uint32 page = 1;
+  uint32 page_size = 2;
+  optional string updated_after = 3;
+}
+
+message SearchUsersRequest {
+  string query = 1;
+  uint32 page = 2;
+  uint32 page_size = 3;
+}
+
+message ListFriendsRequest {
+  uint32 page = 1;
+  uint32 page_size = 2;
+  optional string status = 3;
+  optional string updated_after = 4;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  uint32 current_page = 2;
+  bool has_next_page = 3;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message UserExistsRequest {
+  string email = 1;
+}
+
+message UserExistsResponse {
+  bool exists = 1;
+}
+
+message ToggleUserRequest {
+  string user_id = 1;
+}
+
+message UpdateFriendRequest {
+  string user_id = 1;
+  string status = 2;
+}
+
+message ReportUserRequest {
+  string user_id = 1;
+  string reason = 2;
+  optional string details = 3;
+}
+
+message ListMutualRequest {
+  string user_id = 1;
+  string kind = 2;
+  uint32 page = 3;
+  uint32 page_size = 4;
+}
+
+message MutualItem {
+  string id = 1;
+  string name = 2;
+  string updated_at = 3;
+}
+
+message ListMutualResponse {
+  repeated MutualItem items = 1;
+  uint32 current_page = 2;
+  bool has_next_page = 3;
+  uint64 total = 4;
+  string snapshot_version = 5;
+}

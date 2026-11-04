@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package benito.ai.internal.v1;
+
+import "ai/internal/v1/job.proto";
+
+enum SummarySourceKind {
+  SUMMARY_SOURCE_KIND_UNSPECIFIED = 0;
+  SUMMARY_SOURCE_KIND_CHAT_ROOM = 1;
+  SUMMARY_SOURCE_KIND_CALL_RECORDING = 2;
+}
+
+message SummaryInputMessage {
+  string message_id = 1;
+  uint64 room_sequence = 2;
+  string author_id = 3;
+  optional string author_name = 4;
+  string text = 5;
+  int64 created_at_unix_ms = 6;
+}
+
+message SummaryRequested {
+  JobAttempt job = 1;
+  string snapshot_id = 2;
+  string room_id = 3;
+  string user_id = 4;
+  uint64 from_sequence = 5;
+  uint64 to_sequence = 6;
+  repeated SummaryInputMessage messages = 7;
+  SummarySourceKind source_kind = 8;
+  optional string recording_id = 9;
+  repeated SummaryInputTranscriptSegment transcript_segments = 10;
+}
+
+message SummaryInputTranscriptSegment {
+  uint64 start_ms = 1;
+  uint64 end_ms = 2;
+  string text = 3;
+  optional string speaker_label = 4;
+}
+
+message SummarySource {
+  string message_id = 1;
+  uint64 room_sequence = 2;
+  optional uint64 start_ms = 3;
+  optional uint64 end_ms = 4;
+}
+
+message SummaryItem {
+  string text = 1;
+  repeated SummarySource sources = 2;
+}
+
+message SummaryCompleted {
+  string event_id = 1;
+  string job_id = 2;
+  string attempt_token = 3;
+  string snapshot_id = 4;
+  string source_revision = 5;
+  string model_revision = 6;
+  string overview = 7;
+  repeated SummaryItem key_decisions = 8;
+  repeated SummaryItem mentions = 9;
+  repeated SummaryItem open_questions = 10;
+  repeated SummaryItem action_items = 11;
+  int64 completed_at_unix_ms = 12;
+  SummarySourceKind source_kind = 13;
+  optional string recording_id = 14;
+}
+
+message SummaryFailed {
+  string event_id = 1;
+  string job_id = 2;
+  string attempt_token = 3;
+  string snapshot_id = 4;
+  string source_revision = 5;
+  string error_code = 6;
+  bool retryable = 7;
+  int64 failed_at_unix_ms = 8;
+  SummarySourceKind source_kind = 9;
+  optional string recording_id = 10;
+}

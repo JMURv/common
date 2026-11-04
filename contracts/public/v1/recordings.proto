@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "google/protobuf/timestamp.proto";
+import "public/v1/common.proto";
+import "public/v1/users.proto";
+
+service RecordingsService {
+  rpc StartRecording(StartRecordingRequest) returns (CallRecording);
+  rpc StopRecording(RecordingRequest) returns (CallRecording);
+  rpc GetRecording(RecordingRequest) returns (CallRecording);
+  rpc ListRecordings(ListRecordingsRequest) returns (ListRecordingsResponse);
+  rpc RequestRecordingTranscription(RequestRecordingTranscriptionRequest) returns (RecordingTranscription);
+  rpc RequestRecordingSummary(RequestRecordingSummaryRequest) returns (RecordingSummary);
+  rpc DeleteRecording(RecordingRequest) returns (Empty);
+}
+
+enum CallRecordingStatus {
+  CALL_RECORDING_STATUS_UNSPECIFIED = 0;
+  CALL_RECORDING_STATUS_STARTING = 1;
+  CALL_RECORDING_STATUS_RECORDING = 2;
+  CALL_RECORDING_STATUS_STOPPING = 3;
+  CALL_RECORDING_STATUS_PROCESSING = 4;
+  CALL_RECORDING_STATUS_READY = 5;
+  CALL_RECORDING_STATUS_FAILED = 6;
+  CALL_RECORDING_STATUS_DELETED = 7;
+}
+
+message StartRecordingRequest {
+  string room_id = 1;
+  reserved 2;
+  string idempotency_key = 3;
+}
+
+message RecordingRequest {
+  string recording_id = 1;
+}
+
+message ListRecordingsRequest {
+  uint32 page_size = 1;
+  optional string cursor = 2;
+  reserved 3;
+}
+
+message ListRecordingsResponse {
+  repeated CallRecording recordings = 1;
+  optional string next_cursor = 2;
+}
+
+enum RecordingTranscriptionStatus {
+  RECORDING_TRANSCRIPTION_STATUS_UNSPECIFIED = 0;
+  RECORDING_TRANSCRIPTION_STATUS_PREPARING_INPUT = 1;
+  RECORDING_TRANSCRIPTION_STATUS_QUEUED = 2;
+  RECORDING_TRANSCRIPTION_STATUS_PROCESSING = 3;
+  RECORDING_TRANSCRIPTION_STATUS_READY = 4;
+  RECORDING_TRANSCRIPTION_STATUS_FAILED_RETRYABLE = 5;
+  RECORDING_TRANSCRIPTION_STATUS_FAILED_TERMINAL = 6;
+  RECORDING_TRANSCRIPTION_STATUS_CANCELLED = 7;
+}
+
+message RequestRecordingTranscriptionRequest {
+  string recording_id = 1;
+  string idempotency_key = 2;
+  optional string language = 3;
+}
+
+message RecordingTranscriptionSegment {
+  uint64 start_ms = 1;
+  uint64 end_ms = 2;
+  string text = 3;
+  optional float confidence = 4;
+}
+
+message RecordingTranscription {
+  string recording_id = 1;
+  RecordingTranscriptionStatus status = 2;
+  optional string detected_language = 3;
+  optional string text = 4;
+  repeated RecordingTranscriptionSegment segments = 5;
+  optional string error_code = 6;
+  bool retryable = 7;
+  google.protobuf.Timestamp requested_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+enum RecordingSummaryStatus {
+  RECORDING_SUMMARY_STATUS_UNSPECIFIED = 0;
+  RECORDING_SUMMARY_STATUS_QUEUED = 1;
+  RECORDING_SUMMARY_STATUS_PROCESSING = 2;
+  RECORDING_SUMMARY_STATUS_READY = 3;
+  RECORDING_SUMMARY_STATUS_FAILED_RETRYABLE = 4;
+  RECORDING_SUMMARY_STATUS_FAILED_TERMINAL = 5;
+  RECORDING_SUMMARY_STATUS_CANCELLED = 6;
+}
+
+message RequestRecordingSummaryRequest {
+  string recording_id = 1;
+  string idempotency_key = 2;
+}
+
+message RecordingSummarySource {
+  uint64 start_ms = 1;
+  uint64 end_ms = 2;
+}
+
+message RecordingSummaryItem {
+  string text = 1;
+  repeated RecordingSummarySource sources = 2;
+}
+
+message RecordingSummary {
+  string recording_id = 1;
+  RecordingSummaryStatus status = 2;
+  optional string overview = 3;
+  repeated RecordingSummaryItem key_decisions = 4;
+  repeated RecordingSummaryItem mentions = 5;
+  repeated RecordingSummaryItem open_questions = 6;
+  repeated RecordingSummaryItem action_items = 7;
+  optional string error_code = 8;
+  bool retryable = 9;
+  google.protobuf.Timestamp requested_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message CallRecording {
+  string id = 1;
+  string room_id = 2;
+  reserved 3, 5;
+  CallRecordingStatus status = 4;
+  optional string title = 6;
+  optional PublicMedia media = 7;
+  optional uint64 duration_ms = 8;
+  optional string failure_code = 9;
+  google.protobuf.Timestamp requested_at = 10;
+  optional google.protobuf.Timestamp started_at = 11;
+  optional google.protobuf.Timestamp stopped_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+  optional RecordingTranscription transcription = 14;
+  optional RecordingSummary summary = 15;
+}

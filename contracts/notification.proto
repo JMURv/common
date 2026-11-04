@@ -1,0 +1,65 @@
+syntax = "proto3";
+package notification;
+import "google/protobuf/timestamp.proto";
+
+service NotificationService {
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc CreateNotification(CreateNotificationRequest) returns (Notification);
+  rpc ReadNotification(NotificationIDRequest) returns (NotificationEmpty);
+  rpc ReadAllNotifications(NotificationUserRequest) returns (NotificationEmpty);
+  rpc DeleteNotification(NotificationIDRequest) returns (NotificationEmpty);
+  rpc DeleteAllNotifications(NotificationUserRequest) returns (NotificationEmpty);
+  rpc GetNotificationPreferences(NotificationUserRequest) returns (NotificationPreferences);
+  rpc UpdateNotificationPreferences(UpdateNotificationPreferencesRequest) returns (NotificationPreferences);
+}
+
+message NotificationEmpty {}
+
+message NotificationUserRequest {
+  string user_id = 1;
+}
+
+message NotificationPreferences {
+  bool email_notifications_enabled = 1;
+  bool mention_notifications_enabled = 2;
+  google.protobuf.Timestamp updated_at = 3;
+}
+
+message UpdateNotificationPreferencesRequest {
+  string user_id = 1;
+  bool email_notifications_enabled = 2;
+  bool mention_notifications_enabled = 3;
+}
+
+message NotificationIDRequest {
+  string user_id = 1;
+  string notification_id = 2;
+}
+
+message ListNotificationsRequest {
+  string user_id = 1;
+  uint64 page = 2;
+  uint64 size = 3;
+}
+
+message ListNotificationsResponse {
+  repeated Notification data = 1;
+  uint64 current_page = 2;
+  bool has_next_page = 3;
+}
+
+message CreateNotificationRequest {
+  string user_id = 1;
+  string _type = 2;
+  bytes data = 3;
+  optional string source_key = 4;
+}
+
+message Notification {
+  string id = 1;
+  string user_id = 2;
+  string _type = 3;
+  bytes data = 4;
+  bool is_read = 5;
+  google.protobuf.Timestamp created_at = 6;
+}

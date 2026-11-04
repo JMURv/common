@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "public/v1/common.proto";
+import "public/v1/users.proto";
+
+service MediaService {
+  rpc BeginUpload(BeginMediaUploadRequest) returns (MediaUploadSession);
+  rpc RenewUploadParts(RenewMediaUploadPartsRequest) returns (MediaUploadParts);
+  rpc CompleteUpload(CompleteMediaUploadRequest) returns (PublicMedia);
+  rpc AbortUpload(AbortMediaUploadRequest) returns (Empty);
+  rpc DeleteMedia(DeleteMediaRequest) returns (Empty);
+  rpc ResolveMedia(ResolveMediaRequest) returns (ResolveMediaResponse);
+}
+
+message BeginMediaUploadRequest {
+  string owner_type = 1;
+  string owner_id = 2;
+  string purpose = 3;
+  string file_name = 4;
+  optional string content_type = 5;
+  int64 size = 6;
+  optional int64 duration_ms = 7;
+}
+
+message MediaUploadPart {
+  uint32 part_number = 1;
+  string upload_url = 2;
+}
+
+message MediaUploadParts {
+  repeated MediaUploadPart parts = 1;
+  int64 expires_at_unix_seconds = 2;
+}
+
+message MediaUploadSession {
+  string session_id = 1;
+  string resume_token = 2;
+  int64 part_size = 3;
+  repeated MediaUploadPart parts = 4;
+  int64 expires_at_unix_seconds = 5;
+}
+
+message RenewMediaUploadPartsRequest {
+  string session_id = 1;
+  string resume_token = 2;
+  repeated uint32 part_numbers = 3;
+}
+
+message CompletedMediaUploadPart {
+  uint32 part_number = 1;
+  string etag = 2;
+}
+
+message CompleteMediaUploadRequest {
+  string session_id = 1;
+  string resume_token = 2;
+  repeated CompletedMediaUploadPart parts = 3;
+}
+
+message AbortMediaUploadRequest {
+  string session_id = 1;
+  string resume_token = 2;
+}
+
+message DeleteMediaRequest {
+  string media_object_id = 1;
+  string owner_type = 2;
+  string owner_id = 3;
+}
+
+message ResolveMediaRequest {
+  string owner_type = 1;
+  string owner_id = 2;
+  repeated string media_ids = 3;
+}
+
+message ResolveMediaResponse {
+  repeated PublicMedia items = 1;
+}

@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "google/protobuf/timestamp.proto";
+import "public/v1/common.proto";
+
+service InvitesService {
+  rpc CreateServerInvite(CreateServerInviteRequest) returns (ServerInvite);
+  rpc GetServerInvite(ServerInviteSlugRequest) returns (ServerInvite);
+  rpc GetCurrentServerInvite(GetCurrentServerInviteRequest) returns (ServerInvite);
+  rpc JoinServerInvite(ServerInviteSlugRequest) returns (Empty);
+}
+
+message ServerInvite {
+  string id = 1;
+  string slug = 2;
+  string server_id = 3;
+  string creator_id = 4;
+  string title = 5;
+  optional google.protobuf.Timestamp expires_at = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message CreateServerInviteRequest {
+  string server_id = 1;
+  string title = 2;
+  optional google.protobuf.Timestamp expires_at = 3;
+  bool regenerate = 4;
+}
+
+message ServerInviteSlugRequest {
+  string slug = 1;
+}
+
+message GetCurrentServerInviteRequest {
+  string server_id = 1;
+}

@@ -1,0 +1,228 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "public/v1/common.proto";
+import "public/v1/discovery.proto";
+import "public/v1/users.proto";
+
+service ServersService {
+  rpc ListServers(ListServersRequest) returns (ListServersResponse);
+  rpc ListUnreadServers(ListUnreadServersRequest) returns (ListUnreadServersResponse);
+  rpc GetServer(ServerIdRequest) returns (ServerDetails);
+  rpc CreateServer(CreateServerRequest) returns (CreateServerResponse);
+  rpc UpdateServer(UpdateServerRequest) returns (ServerDetails);
+  rpc DeleteServer(ServerIdRequest) returns (Empty);
+  rpc JoinServer(ServerIdRequest) returns (ServerDetails);
+  rpc LeaveServer(ServerIdRequest) returns (Empty);
+  rpc SetServerPinned(SetServerPinnedRequest) returns (Empty);
+  rpc TransferOwnership(TransferOwnershipRequest) returns (TransferOwnershipResponse);
+  rpc AddMember(ServerMemberRequest) returns (Empty);
+  rpc RemoveMember(ServerMemberRequest) returns (Empty);
+  rpc GetDiscoverySettings(ServerIdRequest) returns (ServerDiscoverySettings);
+  rpc UpdateDiscoverySettings(UpdateServerDiscoverySettingsRequest) returns (ServerDiscoverySettings);
+}
+
+service AuthorizationService {
+  rpc ListPermissions(Empty) returns (ListPermissionsResponse);
+  rpc GetPermission(PermissionIdRequest) returns (Permission);
+  rpc CreatePermission(UpsertPermissionRequest) returns (ResourceIdResponse);
+  rpc UpdatePermission(UpdatePermissionRequest) returns (Empty);
+  rpc DeletePermission(PermissionIdRequest) returns (Empty);
+  rpc GetRole(RoleIdRequest) returns (Role);
+  rpc CreateRole(CreateRoleRequest) returns (ServerDetails);
+  rpc UpdateRole(UpdateRoleRequest) returns (ServerDetails);
+  rpc DeleteRole(RoleServerRequest) returns (ServerDetails);
+  rpc ToggleRoleForUser(ToggleRoleForUserRequest) returns (Empty);
+  rpc TogglePermissionForRole(TogglePermissionForRoleRequest) returns (ServerDetails);
+}
+
+message Server {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  optional string description = 4;
+  repeated PublicMedia avatar = 5;
+  string type = 6;
+  bool is_pinned = 7;
+  bool has_unread = 8;
+  int64 created_at_unix_seconds = 9;
+  int64 updated_at_unix_seconds = 10;
+}
+
+message ServerDetails {
+  Server server = 1;
+  repeated ServerAsset quick_reactions = 2;
+  repeated ServerAsset soundboard = 3;
+  repeated Role roles = 4;
+  repeated ServerMember members = 5;
+}
+
+message ServerAsset {
+  string id = 1;
+  string name = 2;
+  optional string emoji = 3;
+  optional PublicMedia media = 4;
+  optional PublicMedia icon = 5;
+  optional uint64 duration_ms = 6;
+}
+
+message ServerMember {
+  string id = 1;
+  string name = 2;
+  string status = 3;
+  optional string avatar_color = 4;
+  repeated PublicMedia media = 5;
+  repeated RoleSummary roles = 6;
+}
+
+message RoleSummary {
+  string id = 1;
+  string name = 2;
+}
+
+message Permission {
+  string id = 1;
+  string name = 2;
+  optional string description = 3;
+  int64 created_at_unix_seconds = 4;
+  int64 updated_at_unix_seconds = 5;
+}
+
+message Role {
+  string id = 1;
+  optional string server_id = 2;
+  string name = 3;
+  optional string description = 4;
+  repeated Permission permissions = 5;
+  int64 created_at_unix_seconds = 6;
+  int64 updated_at_unix_seconds = 7;
+}
+
+message ListServersRequest {
+  uint32 page = 1;
+  uint32 page_size = 2;
+  string kind = 3;
+  optional string search = 4;
+  optional string sort = 5;
+  optional string after = 6;
+  optional string updated_after = 7;
+}
+
+message ListServersResponse {
+  repeated Server servers = 1;
+  uint32 current_page = 2;
+  bool has_next_page = 3;
+}
+
+message ListUnreadServersRequest {
+  repeated string server_ids = 1;
+}
+
+message ListUnreadServersResponse {
+  repeated string server_ids = 1;
+}
+
+message ServerIdRequest {
+  string server_id = 1;
+}
+
+message CreateServerRequest {
+  string name = 1;
+  string description = 2;
+  repeated PublicMedia avatar = 3;
+  string type = 4;
+}
+
+message CreateServerResponse {
+  string server_id = 1;
+}
+
+message UpdateServerRequest {
+  string server_id = 1;
+  string name = 2;
+  string description = 3;
+  repeated PublicMedia avatar = 4;
+  string type = 5;
+  repeated ServerAsset quick_reactions = 6;
+  repeated ServerAsset soundboard = 7;
+}
+
+message SetServerPinnedRequest {
+  string server_id = 1;
+  bool pinned = 2;
+}
+
+message TransferOwnershipRequest {
+  string server_id = 1;
+  optional string user_id = 2;
+  bool leave_after_transfer = 3;
+}
+
+message TransferOwnershipResponse {
+  string owner_id = 1;
+}
+
+message ServerMemberRequest {
+  string server_id = 1;
+  string user_id = 2;
+}
+
+message ListPermissionsResponse {
+  repeated Permission permissions = 1;
+}
+
+message PermissionIdRequest {
+  string permission_id = 1;
+}
+
+message UpsertPermissionRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message UpdatePermissionRequest {
+  string permission_id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message ResourceIdResponse {
+  string id = 1;
+}
+
+message RoleIdRequest {
+  string role_id = 1;
+}
+
+message CreateRoleRequest {
+  string server_id = 1;
+  string name = 2;
+  optional string description = 3;
+  repeated string permission_ids = 4;
+}
+
+message UpdateRoleRequest {
+  string role_id = 1;
+  string server_id = 2;
+  string name = 3;
+  optional string description = 4;
+  repeated string permission_ids = 5;
+}
+
+message RoleServerRequest {
+  string role_id = 1;
+  string server_id = 2;
+}
+
+message ToggleRoleForUserRequest {
+  string role_id = 1;
+  string server_id = 2;
+  string user_id = 3;
+}
+
+message TogglePermissionForRoleRequest {
+  string role_id = 1;
+  string server_id = 2;
+  string permission_id = 3;
+}

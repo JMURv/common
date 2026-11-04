@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "google/protobuf/timestamp.proto";
+
+service AnalyticsService {
+  rpc GetServerAnalytics(GetServerAnalyticsRequest) returns (AnalyticsSnapshot);
+  rpc GetOwnedAnalytics(AnalyticsQuery) returns (AnalyticsSnapshot);
+  rpc GetGlobalAnalytics(AnalyticsQuery) returns (AnalyticsSnapshot);
+  rpc ExportServerAnalytics(GetServerAnalyticsRequest) returns (stream AnalyticsCsvChunk);
+  rpc ExportOwnedAnalytics(AnalyticsQuery) returns (stream AnalyticsCsvChunk);
+  rpc ExportGlobalAnalytics(AnalyticsQuery) returns (stream AnalyticsCsvChunk);
+}
+
+enum AnalyticsPeriod {
+  ANALYTICS_PERIOD_UNSPECIFIED = 0;
+  ANALYTICS_PERIOD_TODAY = 1;
+  ANALYTICS_PERIOD_SEVEN_DAYS = 2;
+  ANALYTICS_PERIOD_THIRTY_DAYS = 3;
+  ANALYTICS_PERIOD_MONTH = 4;
+  ANALYTICS_PERIOD_ALL = 5;
+  ANALYTICS_PERIOD_CUSTOM = 6;
+}
+
+message CalendarDate {
+  int32 year = 1;
+  uint32 month = 2;
+  uint32 day = 3;
+}
+
+message AnalyticsQuery {
+  AnalyticsPeriod period = 1;
+  optional CalendarDate from = 2;
+  optional CalendarDate to = 3;
+}
+
+message GetServerAnalyticsRequest {
+  string server_id = 1;
+  AnalyticsQuery query = 2;
+}
+
+message AnalyticsMetricPoint {
+  CalendarDate date = 1;
+  int64 messages = 2;
+  double voice_minutes = 3;
+  int64 storage_bytes = 4;
+  int64 active_users = 5;
+  int64 new_members = 6;
+  int64 members_left = 7;
+  int64 moderation_actions = 8;
+  int64 raid_incidents = 9;
+}
+
+message RankedAnalyticsMetric {
+  string id = 1;
+  optional string name = 2;
+  int64 messages = 3;
+  double voice_minutes = 4;
+}
+
+message StorageAnalyticsMetric {
+  string media_type = 1;
+  int64 bytes = 2;
+}
+
+message ServerAnalyticsComparison {
+  string id = 1;
+  string name = 2;
+  int64 messages = 3;
+  double voice_minutes = 4;
+  int64 storage_bytes = 5;
+  int64 member_growth = 6;
+}
+
+message AnalyticsSnapshot {
+  bool can_view_global = 1;
+  repeated string server_ids = 2;
+  CalendarDate from = 3;
+  CalendarDate to = 4;
+  int64 dau = 5;
+  int64 wau = 6;
+  int64 mau = 7;
+  int64 messages = 8;
+  double voice_minutes = 9;
+  int64 storage_bytes = 10;
+  int64 new_members = 11;
+  int64 members_left = 12;
+  int64 moderation_actions = 13;
+  int64 raid_incidents = 14;
+  int64 active_rooms = 15;
+  repeated AnalyticsMetricPoint daily = 16;
+  repeated RankedAnalyticsMetric rooms = 17;
+  repeated RankedAnalyticsMetric users = 18;
+  repeated StorageAnalyticsMetric storage_by_type = 19;
+  repeated ServerAnalyticsComparison server_comparison = 20;
+  int64 servers_created = 21;
+  int64 users_created = 22;
+  int64 limit_exceeded = 24;
+  int64 feature_usage = 25;
+  int64 ai_summary_requests = 26;
+  reserved 23, 27, 28;
+  reserved "license_usage", "backup_failures", "integration_usage";
+  google.protobuf.Timestamp generated_at = 29;
+}
+
+message AnalyticsCsvChunk {
+  bytes data = 1;
+}

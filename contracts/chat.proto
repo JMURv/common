@@ -1,0 +1,604 @@
+syntax = "proto3";
+package chat;
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+service ChatService {
+  rpc SearchMsgs(SearchMsgsRequest) returns (SearchMsgsResponse);
+  rpc ListMsgs(ListMsgsRequest) returns (ListMsgsResponse);
+  rpc GetMsg(GetMsgRequest) returns (Message);
+  rpc CreateStickerMsg(CreateStickerMsgRequest) returns (Message);
+  rpc RequestMsgTranscription(RequestMsgTranscriptionRequest) returns (MsgTranscription);
+  rpc RequestMsgTranslation(RequestMsgTranslationRequest) returns (MsgTranslation);
+  rpc RequestChatSummary(RequestChatSummaryRequest) returns (ChatSummary);
+  rpc RequestUnreadDigest(RequestUnreadDigestRequest) returns (UnreadDigestProjection);
+  rpc ListMsgCollections(ListMsgCollectionsRequest) returns (ListMsgCollectionsResponse);
+  rpc CreateMsgCollection(CreateMsgCollectionRequest) returns (MsgCollection);
+  rpc UpdateMsgCollection(UpdateMsgCollectionRequest) returns (MsgCollection);
+  rpc DeleteMsgCollection(DeleteMsgCollectionRequest) returns (DeleteMsgCollectionResponse);
+  rpc ToggleMsgCollectionItem(ToggleMsgCollectionItemRequest) returns (ToggleMsgCollectionItemResponse);
+
+  rpc ListRoomMembers(ListRoomMembersRequest) returns (ListRoomMembersResponse);
+  rpc CheckRoomMemberships(CheckRoomMembershipsRequest) returns (CheckRoomMembershipsResponse);
+  rpc CheckRoomCapabilities(CheckRoomMembershipsRequest) returns (CheckRoomCapabilitiesResponse);
+  rpc AuthorizeRooms(AuthorizeRoomsRequest) returns (AuthorizeRoomsResponse);
+  rpc AuthorizeMessageMedia(AuthorizeMessageMediaRequest) returns (AuthorizeMessageMediaResponse);
+  rpc GetRoomAccess(GetRoomAccessRequest) returns (RoomAccessSettings);
+  rpc UpdateRoomAccess(UpdateRoomAccessRequest) returns (RoomAccessSettings);
+
+  rpc ListRooms(ListRoomsRequest) returns (ListRoomsResponse);
+  rpc ListPreviewRooms(ListPreviewRoomsRequest) returns (ListPreviewRoomsResponse);
+  rpc ListUnreadServerIds(ListUnreadServerIdsRequest) returns (ListUnreadServerIdsResponse);
+  rpc GetRoomByID(GetRoomByIDRequest) returns (Room);
+  rpc CreateRoom(CreateRoomRequest) returns (CreateRoomResponse);
+  rpc UpdateRoom(UpdateRoomRequest) returns (UpdateRoomResponse);
+  rpc DeleteRoom(DeleteRoomRequest) returns (DeleteRoomResponse);
+
+  // Auth methods
+  rpc ToggleRoomMember(ToggleRoomMemberRequest) returns (ToggleRoomMemberResponse);
+  rpc ToggleAllowedID(ToggleAllowedIDRequest) returns (ToggleAllowedIDResponse);
+  rpc JoinServerRooms(JoinServerRoomsRequest) returns (JoinServerRoomsResponse);
+  rpc LeaveServerRooms(LeaveServerRoomsRequest) returns (LeaveServerRoomsResponse);
+}
+
+// MSG -- START //
+  message MsgFilters {
+    uint64 page = 1;
+    uint64 size = 2;
+    optional string after = 3;
+    optional string before = 4;
+    optional string query = 5;
+    optional bool pinned = 6;
+    optional string updated_after = 7;
+    optional string created_from = 8;
+    optional string created_before = 9;
+    optional string around = 10;
+    optional string collection_id = 11;
+    optional string media_category = 12;
+  }
+
+enum PrincipalKind {
+  PRINCIPAL_KIND_UNSPECIFIED = 0;
+  PRINCIPAL_KIND_USER = 1;
+  reserved 2;
+  reserved "PRINCIPAL_KIND_BOT";
+}
+
+message MessagePrincipal {
+  string id = 1;
+  PrincipalKind kind = 2;
+  optional string name = 4;
+  google.protobuf.Value media = 5;
+  optional string avatar_color = 6;
+  reserved 3;
+  reserved "application_id";
+}
+
+message Message {
+  string id = 1;
+  MessagePrincipal author = 2;
+  string client_id = 3;
+  string room_id = 4;
+  optional string reply_id = 5;
+  string content = 6;
+  google.protobuf.Value media = 7;
+  google.protobuf.Value reactions = 8;
+  bool is_edited = 9;
+  string _type = 10;
+
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+
+  optional string reply_content = 13;
+  optional google.protobuf.Value reply_media = 14;
+  reserved 15, 16, 17;
+  optional string forwarded_from_msg_id = 18;
+  optional MessagePrincipal forwarded_from_author = 19;
+  reserved 20, 21;
+  optional string forwarded_from_room_id = 22;
+  optional string forwarded_from_server_id = 23;
+  google.protobuf.Value additional_data = 24;
+  optional google.protobuf.Timestamp deleted_at = 25;
+  bool pinned = 26;
+  uint64 room_seq = 27;
+  repeated MsgTranscription transcriptions = 28;
+  optional string server_id = 29;
+  optional MessagePrincipal reply_author = 30;
+  optional StickerMessageProjection sticker = 33;
+  repeated MessagePrincipal mentioned_principals = 34;
+  reserved 31;
+  reserved "action_rows";
+  reserved 32;
+  reserved "component_revision";
+}
+
+message StickerMessageProjection {
+  string sticker_id = 1;
+  string pack_id = 2;
+  string pack_slug = 3;
+  string pack_title = 4;
+  repeated string emoji = 5;
+  string format = 6;
+  google.protobuf.Value media = 7;
+  optional google.protobuf.Value preview = 8;
+  uint64 revision = 9;
+}
+
+message CreateStickerMsgRequest {
+  string room_id = 1;
+  string client_id = 2;
+  optional string reply_id = 3;
+  StickerMessageProjection sticker = 4;
+}
+
+enum MsgTranscriptionStatus {
+  MSG_TRANSCRIPTION_STATUS_UNSPECIFIED = 0;
+  MSG_TRANSCRIPTION_STATUS_QUEUED = 1;
+  MSG_TRANSCRIPTION_STATUS_PROCESSING = 2;
+  MSG_TRANSCRIPTION_STATUS_READY = 3;
+  MSG_TRANSCRIPTION_STATUS_FAILED_RETRYABLE = 4;
+  MSG_TRANSCRIPTION_STATUS_FAILED_TERMINAL = 5;
+  MSG_TRANSCRIPTION_STATUS_CANCELLED = 6;
+}
+
+message MsgTranscriptionSegment {
+  uint64 start_ms = 1;
+  uint64 end_ms = 2;
+  string text = 3;
+  optional float confidence = 4;
+}
+
+message MsgTranscription {
+  string msg_id = 1;
+  string media_id = 2;
+  MsgTranscriptionStatus status = 3;
+  optional string text = 4;
+  optional string detected_language = 5;
+  repeated MsgTranscriptionSegment segments = 6;
+  optional string error_code = 7;
+  bool retryable = 8;
+  google.protobuf.Timestamp requested_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message RequestMsgTranscriptionRequest {
+  string uid = 1;
+  string room_id = 2;
+  string msg_id = 3;
+  string media_id = 4;
+  optional string language = 5;
+  string idempotency_key = 6;
+}
+
+enum MsgTranslationSourceKind {
+  MSG_TRANSLATION_SOURCE_KIND_UNSPECIFIED = 0;
+  MSG_TRANSLATION_SOURCE_KIND_MESSAGE = 1;
+  MSG_TRANSLATION_SOURCE_KIND_TRANSCRIPTION = 2;
+}
+
+enum MsgTranslationStatus {
+  MSG_TRANSLATION_STATUS_UNSPECIFIED = 0;
+  MSG_TRANSLATION_STATUS_QUEUED = 1;
+  MSG_TRANSLATION_STATUS_PROCESSING = 2;
+  MSG_TRANSLATION_STATUS_READY = 3;
+  MSG_TRANSLATION_STATUS_FAILED_RETRYABLE = 4;
+  MSG_TRANSLATION_STATUS_FAILED_TERMINAL = 5;
+  MSG_TRANSLATION_STATUS_CANCELLED = 6;
+}
+
+message MsgTranslation {
+  MsgTranslationSourceKind source_kind = 1;
+  string source_id = 2;
+  string msg_id = 3;
+  string target_language = 4;
+  MsgTranslationStatus status = 5;
+  optional string translated_text = 6;
+  optional string model_revision = 7;
+  optional string error_code = 8;
+  bool retryable = 9;
+  google.protobuf.Timestamp requested_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message RequestMsgTranslationRequest {
+  string uid = 1;
+  string room_id = 2;
+  string msg_id = 3;
+  optional string media_id = 4;
+  string target_language = 5;
+  string idempotency_key = 6;
+}
+
+enum ChatSummaryStatus {
+  CHAT_SUMMARY_STATUS_UNSPECIFIED = 0;
+  CHAT_SUMMARY_STATUS_QUEUED = 1;
+  CHAT_SUMMARY_STATUS_PROCESSING = 2;
+  CHAT_SUMMARY_STATUS_READY = 3;
+  CHAT_SUMMARY_STATUS_FAILED_RETRYABLE = 4;
+  CHAT_SUMMARY_STATUS_FAILED_TERMINAL = 5;
+  CHAT_SUMMARY_STATUS_CANCELLED = 6;
+}
+
+message ChatSummarySource {
+  string message_id = 1;
+  uint64 room_sequence = 2;
+}
+
+message ChatSummaryItem {
+  string text = 1;
+  repeated ChatSummarySource sources = 2;
+}
+
+message ChatSummary {
+  string snapshot_id = 1;
+  string room_id = 2;
+  uint64 from_sequence = 3;
+  uint64 to_sequence = 4;
+  ChatSummaryStatus status = 5;
+  optional string overview = 6;
+  repeated ChatSummaryItem key_decisions = 7;
+  repeated ChatSummaryItem mentions = 8;
+  repeated ChatSummaryItem open_questions = 9;
+  repeated ChatSummaryItem action_items = 10;
+  optional string model_revision = 11;
+  optional string error_code = 12;
+  bool retryable = 13;
+  google.protobuf.Timestamp updated_at = 14;
+}
+
+message RequestChatSummaryRequest {
+  string uid = 1;
+  string room_id = 2;
+  string idempotency_key = 3;
+}
+
+message RequestUnreadDigestRequest {
+  string uid = 1;
+  uint32 max_rooms = 2;
+  uint32 max_messages_per_room = 3;
+  DigestRankingProfile ranking = 4;
+  uint64 ranking_revision = 5;
+  string deployment_policy_revision = 6;
+  string idempotency_key = 7;
+}
+
+message DigestRankingProfile {
+  uint32 direct_messages_weight = 1;
+  uint32 mentions_weight = 2;
+  uint32 replies_weight = 3;
+  uint32 activity_weight = 4;
+  uint32 freshness_weight = 5;
+}
+
+enum UnreadDigestStatus {
+  UNREAD_DIGEST_STATUS_UNSPECIFIED = 0;
+  UNREAD_DIGEST_STATUS_QUEUED = 1;
+  UNREAD_DIGEST_STATUS_PROCESSING = 2;
+  UNREAD_DIGEST_STATUS_READY = 3;
+  UNREAD_DIGEST_STATUS_FAILED_RETRYABLE = 4;
+  UNREAD_DIGEST_STATUS_FAILED_TERMINAL = 5;
+  UNREAD_DIGEST_STATUS_CANCELLED = 6;
+}
+
+message UnreadDigestSource {
+  string message_id = 1;
+  uint64 room_sequence = 2;
+}
+
+message UnreadDigestItem {
+  string text = 1;
+  repeated UnreadDigestSource sources = 2;
+}
+
+message UnreadDigestRoom {
+  string room_id = 1;
+  optional string server_id = 2;
+  uint64 from_sequence = 3;
+  uint64 to_sequence = 4;
+  uint32 unread_count = 5;
+  uint32 mention_count = 6;
+  uint32 reply_count = 7;
+  int64 ranking_score = 8;
+  string room_snapshot_id = 9;
+  string source_revision = 10;
+  uint32 message_count = 11;
+  optional string overview = 12;
+  repeated UnreadDigestItem important_discussions = 13;
+  repeated UnreadDigestItem mentions = 14;
+  repeated UnreadDigestItem urgent_questions = 15;
+  repeated UnreadDigestItem missed_decisions = 16;
+  repeated UnreadDigestItem action_items = 17;
+  uint32 admin_signal_score = 18;
+}
+
+message UnreadDigestProjection {
+  string snapshot_id = 1;
+  string cache_revision = 2;
+  repeated UnreadDigestRoom rooms = 3;
+  bool truncated = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp expires_at = 6;
+  UnreadDigestStatus status = 7;
+  optional string overview = 8;
+  optional string model_revision = 9;
+  optional string error_code = 10;
+  bool retryable = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+message SearchMsgsRequest {
+  string uid = 1;
+  optional string room_id = 2;
+  uint64 page = 3;
+  uint64 size = 4;
+  string query = 5;
+}
+
+message SearchMsgsResponse {
+  bytes data = 1;
+}
+
+message ListMsgsRequest {
+  string room_id = 1;
+  MsgFilters filters = 2;
+  string uid = 3;
+  bool allow_preview = 4;
+  optional string preview_server_id = 5;
+}
+
+message ListMsgsResponse {
+  repeated Message data = 1;
+  uint64 current_page = 2;
+  bool has_next_page = 3;
+  bool has_older = 4;
+  bool has_newer = 5;
+}
+
+message GetMsgRequest {
+  string msg_id = 1;
+  string uid = 2;
+  bool allow_preview = 3;
+  optional string preview_server_id = 4;
+}
+
+message MsgCollection {
+  string id = 1;
+  string user_id = 2;
+  string room_id = 3;
+  string name = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  repeated string msg_ids = 7;
+}
+
+message UpdateMsgCollectionRequest {
+  string uid = 1;
+  string room_id = 2;
+  string collection_id = 3;
+  string name = 4;
+}
+message DeleteMsgCollectionRequest { string uid = 1; string room_id = 2; string collection_id = 3; }
+message DeleteMsgCollectionResponse {}
+
+message ListMsgCollectionsRequest {
+  string uid = 1;
+  string room_id = 2;
+  optional string updated_after = 3;
+}
+
+message ListMsgCollectionsResponse {
+  repeated MsgCollection data = 1;
+}
+
+message CreateMsgCollectionRequest {
+  string uid = 1;
+  string room_id = 2;
+  string name = 3;
+}
+
+message ToggleMsgCollectionItemRequest {
+  string uid = 1;
+  string room_id = 2;
+  string collection_id = 3;
+  string msg_id = 4;
+  bool active = 5;
+}
+
+message ToggleMsgCollectionItemResponse {}
+
+// MSG -- END //
+
+// ROOMS -- START //
+
+  message RoomFilters {
+    uint64 page = 1;
+    uint64 size = 2;
+    optional string query = 3;
+    optional string server_id = 4;
+    string kind = 5;
+    optional string after = 6;
+    optional string updated_after = 7;
+    bool include_all_private = 8;
+    bool allow_preview = 9;
+  }
+
+message ListPreviewRoomsRequest {
+  string server_id = 1;
+  // Empty means the deterministic default public preview room: `general`
+  // first, otherwise the oldest open room visible by default.
+  repeated string room_ids = 2;
+}
+
+message PreviewRoom {
+  string id = 1;
+  string name = 2;
+}
+
+message ListPreviewRoomsResponse {
+  repeated PreviewRoom rooms = 1;
+}
+
+enum ConversationKind {
+  CONVERSATION_KIND_UNSPECIFIED = 0;
+  CONVERSATION_KIND_ROOM = 1;
+  CONVERSATION_KIND_HUMAN_DIRECT = 2;
+  reserved 3;
+  reserved "CONVERSATION_KIND_BOT_DIRECT";
+}
+
+message Room {
+  string id = 1;
+  string name = 2;
+  string _type = 3;
+  repeated string allowed_user_ids = 4;
+
+  optional string last_msg_id = 5;
+  optional MessagePrincipal last_msg_author = 6;
+  optional string last_seen_msg_id = 7;
+  optional string last_msg_content = 8;
+  optional google.protobuf.Value last_msg_media = 9;
+  optional google.protobuf.Timestamp last_msg_created_at = 10;
+
+  uint64 unread_count = 11;
+  repeated Message messages = 12;
+  google.protobuf.Timestamp created_at = 13;
+  string server_id = 14;
+  google.protobuf.Timestamp updated_at = 15;
+  string owner_id = 16;
+  bool is_direct = 17;
+  optional google.protobuf.Timestamp deleted_at = 18;
+  uint64 last_seen_seq = 19;
+  ConversationKind conversation_kind = 20;
+  reserved 21, 22;
+  reserved "bot_identity", "bot_installation_id";
+}
+
+message ListRoomMembersRequest {
+  string room_id = 1;
+}
+
+message ListRoomMembersResponse {
+  repeated string ids = 1;
+}
+
+message CheckRoomMembershipsRequest { string uid = 1; repeated string room_ids = 2; }
+message CheckRoomMembershipsResponse { bytes membership_mask = 1; }
+message RoomCapabilities { bool can_view = 1; bool can_send = 2; bool can_connect = 3; optional string server_id = 4; }
+message CheckRoomCapabilitiesResponse { repeated RoomCapabilities capabilities = 1; }
+message RoomPermissionOverride {
+  string user_id = 1;
+  optional bool can_view = 2;
+  optional bool can_send = 3;
+  optional bool can_connect = 4;
+}
+message RoomAccessSettings {
+  bool default_can_view = 1;
+  bool default_can_send = 2;
+  bool default_can_connect = 3;
+  repeated RoomPermissionOverride overrides = 4;
+}
+message GetRoomAccessRequest { string room_id = 1; }
+message UpdateRoomAccessRequest {
+  string room_id = 1;
+  bool default_can_view = 2;
+  bool default_can_send = 3;
+  bool default_can_connect = 4;
+  repeated RoomPermissionOverride overrides = 5;
+}
+message AuthorizeRoomsRequest { string uid = 1; repeated string room_ids = 2; }
+message RoomAuthorization { string room_id = 1; string server_id = 2; bool is_member = 3; }
+message AuthorizeRoomsResponse { repeated RoomAuthorization rooms = 1; }
+
+message AuthorizeMessageMediaRequest {
+  string uid = 1;
+  string message_id = 2;
+  repeated string media_ids = 3;
+}
+
+message AuthorizeMessageMediaResponse { bool authorized = 1; }
+
+message ListRoomsRequest {
+  string uid = 1;
+  RoomFilters filters = 2;
+}
+
+message ListRoomsResponse {
+  repeated Room data = 1;
+  uint64 current_page = 2;
+  bool has_next_page = 3;
+}
+
+message GetRoomByIDRequest {
+  string room_id = 1;
+}
+
+message CreateRoomRequest {
+  string server_id = 1;
+  string owner_id = 2;
+  string name = 3;
+  string _type = 4;
+  repeated string allowed_user_ids = 5;
+  bool is_direct = 6;
+}
+
+message CreateRoomResponse {
+  Room room = 1;
+}
+
+message UpdateRoomRequest{
+  string room_id = 1;
+  string name = 2;
+  string _type = 3;
+  repeated string allowed_user_ids = 4;
+  bool can_manage_server = 5;
+}
+
+message ListUnreadServerIdsRequest {
+  string uid = 1;
+  repeated string server_ids = 2;
+}
+
+message ListUnreadServerIdsResponse {
+  repeated string server_ids = 1;
+}
+
+message UpdateRoomResponse{}
+
+message DeleteRoomRequest {
+  string room_id = 1;
+  bool can_manage_server = 2;
+}
+
+message DeleteRoomResponse {}
+
+
+message ToggleRoomMemberRequest {
+  string user_id = 1;
+  string room_id = 2;
+  bool can_manage_members = 3;
+}
+
+message ToggleRoomMemberResponse {}
+
+message ToggleAllowedIDRequest {
+  string user_id = 1;
+  string room_id = 2;
+}
+
+message ToggleAllowedIDResponse {}
+
+message JoinServerRoomsRequest {
+  string server_id = 1;
+  string user_id = 2;
+}
+
+message JoinServerRoomsResponse {}
+
+message LeaveServerRoomsRequest {
+  string server_id = 1;
+  string user_id = 2;
+}
+
+message LeaveServerRoomsResponse {}
+
+// ROOMS -- END //

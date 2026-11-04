@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+service SystemService {
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+}
+
+message GetCapabilitiesRequest {
+  string client_version = 1;
+  string platform = 2;
+}
+
+message GetCapabilitiesResponse {
+  string api_version = 1;
+  string minimum_client_version = 2;
+  repeated TransportFeature features = 3;
+  int64 server_time_unix_seconds = 4;
+}
+
+enum TransportFeature {
+  TRANSPORT_FEATURE_UNSPECIFIED = 0;
+  TRANSPORT_FEATURE_NATIVE_GRPC = 1;
+  TRANSPORT_FEATURE_GRPC_WEB = 2;
+  TRANSPORT_FEATURE_TYPED_ERRORS = 3;
+  TRANSPORT_FEATURE_HTTP2 = 4;
+  TRANSPORT_FEATURE_AI_TRANSCRIPTION = 5;
+  TRANSPORT_FEATURE_AI_SUMMARY = 6;
+  reserved 7;
+  reserved "TRANSPORT_FEATURE_BOT_EVENT_DELIVERY";
+}

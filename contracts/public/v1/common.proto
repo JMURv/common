@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message Empty {}
+
+message PageRequest {
+  uint32 page_size = 1;
+  string page_token = 2;
+}
+
+message PageInfo {
+  string next_page_token = 1;
+}
+
+message ResourceVersion {
+  google.protobuf.Timestamp updated_at = 1;
+}
+
+message DeviceContext {
+  string user_agent = 1;
+  string device_id = 2;
+}

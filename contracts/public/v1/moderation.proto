@@ -1,0 +1,355 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "google/protobuf/timestamp.proto";
+import "public/v1/chat.proto";
+import "public/v1/common.proto";
+import "public/v1/users.proto";
+
+service ModerationService {
+  rpc GetDashboard(GetModerationDashboardRequest) returns (ModerationDashboard);
+  rpc GetUserSnapshot(GetUserModerationSnapshotRequest) returns (UserModerationSnapshot);
+  rpc ListCases(ListModerationCasesRequest) returns (ListModerationCasesResponse);
+  rpc CreateCase(CreateModerationCaseRequest) returns (ModerationCase);
+  rpc ResolveCase(ResolveModerationCaseRequest) returns (ModerationCase);
+  rpc ListNotes(ListModerationNotesRequest) returns (ListModerationNotesResponse);
+  rpc CreateNote(CreateModerationNoteRequest) returns (ModerationNote);
+  rpc DeleteNote(DeleteModerationNoteRequest) returns (Empty);
+  rpc ListRules(ServerModerationRequest) returns (ListAutomodRulesResponse);
+  rpc UpsertRule(UpsertAutomodRuleRequest) returns (AutomodRule);
+  rpc DeleteRule(DeleteAutomodRuleRequest) returns (Empty);
+  rpc ListAudit(ListModerationAuditRequest) returns (ListModerationAuditResponse);
+  rpc GetAntiRaidSettings(ServerModerationRequest) returns (AntiRaidSettings);
+  rpc UpdateAntiRaidSettings(UpdateAntiRaidSettingsRequest) returns (AntiRaidSettings);
+  rpc ListSuspiciousUsers(ListSuspiciousUsersRequest) returns (ListSuspiciousUsersResponse);
+  rpc StartBulkModeration(StartBulkModerationRequest) returns (BulkModerationOperation);
+  rpc GetBulkModerationOperation(GetBulkModerationOperationRequest) returns (BulkModerationOperation);
+}
+
+enum ModerationAction {
+  MODERATION_ACTION_UNSPECIFIED = 0;
+  MODERATION_ACTION_WARN = 1;
+  MODERATION_ACTION_TIMEOUT = 2;
+  MODERATION_ACTION_BAN = 3;
+  MODERATION_ACTION_KICK = 4;
+  MODERATION_ACTION_MUTE = 5;
+}
+
+enum ModerationCaseStatus {
+  MODERATION_CASE_STATUS_UNSPECIFIED = 0;
+  MODERATION_CASE_STATUS_ACTIVE = 1;
+  MODERATION_CASE_STATUS_RESOLVED = 2;
+  MODERATION_CASE_STATUS_EXPIRED = 3;
+}
+
+enum ModerationScope {
+  MODERATION_SCOPE_UNSPECIFIED = 0;
+  MODERATION_SCOPE_TEXT = 1;
+  MODERATION_SCOPE_VOICE = 2;
+  MODERATION_SCOPE_BOTH = 3;
+}
+
+enum AutomodRuleKind {
+  AUTOMOD_RULE_KIND_UNSPECIFIED = 0;
+  AUTOMOD_RULE_KIND_SLOWMODE = 1;
+  AUTOMOD_RULE_KIND_LINK_RESTRICTION = 2;
+  AUTOMOD_RULE_KIND_MEDIA_RESTRICTION = 3;
+  AUTOMOD_RULE_KIND_WORD_FILTER = 4;
+}
+
+enum AntiRaidMode {
+  ANTI_RAID_MODE_UNSPECIFIED = 0;
+  ANTI_RAID_MODE_NORMAL = 1;
+  ANTI_RAID_MODE_ELEVATED = 2;
+  ANTI_RAID_MODE_LOCKDOWN = 3;
+}
+
+enum AntiRaidSensitivity {
+  ANTI_RAID_SENSITIVITY_UNSPECIFIED = 0;
+  ANTI_RAID_SENSITIVITY_LOW = 1;
+  ANTI_RAID_SENSITIVITY_STANDARD = 2;
+  ANTI_RAID_SENSITIVITY_HIGH = 3;
+}
+
+message ModerationUser {
+  string id = 1;
+  optional string name = 2;
+  repeated PublicMedia media = 3;
+  optional string avatar_color = 4;
+}
+
+message ModerationCase {
+  string id = 1;
+  string server_id = 2;
+  ModerationUser target = 3;
+  string actor_user_id = 4;
+  ModerationAction action = 5;
+  string reason = 6;
+  ModerationCaseStatus status = 7;
+  optional google.protobuf.Timestamp expires_at = 8;
+  MetadataMap metadata = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+  ModerationScope scope = 12;
+}
+
+message ModerationNote {
+  string id = 1;
+  string server_id = 2;
+  ModerationUser target = 3;
+  string author_user_id = 4;
+  string content = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message SlowmodeConfig {
+  uint32 seconds = 1;
+  bool staff_exempt = 2;
+}
+
+message WordFilterConfig {
+  repeated string words = 1;
+  bool staff_exempt = 2;
+}
+
+message ContentRestrictionConfig {
+  bool staff_exempt = 1;
+}
+
+message AutomodRuleConfig {
+  oneof kind {
+    SlowmodeConfig slowmode = 1;
+    WordFilterConfig word_filter = 2;
+    ContentRestrictionConfig link_restriction = 3;
+    ContentRestrictionConfig media_restriction = 4;
+  }
+}
+
+message AutomodRule {
+  string id = 1;
+  string server_id = 2;
+  string name = 3;
+  AutomodRuleKind kind = 4;
+  AutomodRuleConfig config = 5;
+  bool enabled = 6;
+  string created_by = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message ModerationAuditEntry {
+  string id = 1;
+  string server_id = 2;
+  ModerationUser actor = 3;
+  optional ModerationUser target = 4;
+  string action = 5;
+  optional string entity_id = 6;
+  MetadataMap details = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message ServerModerationRequest {
+  string server_id = 1;
+}
+
+message AntiRaidSettings {
+  string server_id = 1;
+  uint64 revision = 2;
+  AntiRaidSensitivity sensitivity = 3;
+  AntiRaidMode manual_mode = 4;
+  AntiRaidMode effective_mode = 5;
+  optional google.protobuf.Timestamp manual_until = 6;
+  bool auto_escalation_enabled = 7;
+  uint64 minimum_account_age_seconds = 8;
+  uint64 minimum_membership_age_seconds = 9;
+  uint32 maximum_mentions_per_message = 10;
+  repeated string trusted_role_ids = 11;
+  optional google.protobuf.Timestamp updated_at = 12;
+}
+
+message UpdateAntiRaidSettingsRequest {
+  string server_id = 1;
+  uint64 expected_revision = 2;
+  AntiRaidSensitivity sensitivity = 3;
+  AntiRaidMode manual_mode = 4;
+  optional google.protobuf.Timestamp manual_until = 5;
+  bool auto_escalation_enabled = 6;
+  uint64 minimum_account_age_seconds = 7;
+  uint64 minimum_membership_age_seconds = 8;
+  uint32 maximum_mentions_per_message = 9;
+  repeated string trusted_role_ids = 10;
+}
+
+message ModerationPageRequest {
+  uint32 page = 1;
+  uint32 page_size = 2;
+  optional string target_user_id = 3;
+}
+
+message ListModerationCasesRequest {
+  string server_id = 1;
+  ModerationPageRequest page = 2;
+  optional ModerationCaseStatus status = 3;
+}
+
+message ListModerationCasesResponse {
+  repeated ModerationCase cases = 1;
+  uint32 current_page = 2;
+  bool has_next_page = 3;
+}
+
+message CreateModerationCaseRequest {
+  string server_id = 1;
+  string target_user_id = 2;
+  ModerationAction action = 3;
+  string reason = 4;
+  optional google.protobuf.Timestamp expires_at = 5;
+  MetadataMap metadata = 6;
+  ModerationScope scope = 7;
+}
+
+message SuspiciousUser {
+  ModerationUser user = 1;
+  uint32 risk_score = 2;
+  repeated string reason_codes = 3;
+  string incident_id = 4;
+  google.protobuf.Timestamp first_seen_at = 5;
+  google.protobuf.Timestamp last_seen_at = 6;
+  bool trusted = 7;
+  bool protected_user = 8;
+  optional ModerationAction active_action = 9;
+}
+
+message ListSuspiciousUsersRequest {
+  string server_id = 1;
+  uint32 page_size = 2;
+  optional string cursor = 3;
+  uint32 minimum_score = 4;
+}
+
+message ListSuspiciousUsersResponse {
+  repeated SuspiciousUser users = 1;
+  optional string next_cursor = 2;
+}
+
+message StartBulkModerationRequest {
+  string server_id = 1;
+  string command_id = 2;
+  repeated string target_user_ids = 3;
+  ModerationAction action = 4;
+  ModerationScope scope = 5;
+  string reason = 6;
+  optional google.protobuf.Timestamp expires_at = 7;
+  uint32 delete_recent_messages_per_user = 8;
+}
+
+message GetBulkModerationOperationRequest {
+  string server_id = 1;
+  string operation_id = 2;
+}
+
+message BulkModerationItem {
+  string target_user_id = 1;
+  string status = 2;
+  optional string error = 3;
+}
+
+message BulkModerationOperation {
+  string id = 1;
+  string command_id = 2;
+  string server_id = 3;
+  ModerationAction action = 4;
+  ModerationScope scope = 5;
+  string status = 6;
+  uint32 total = 7;
+  uint32 applied = 8;
+  uint32 skipped = 9;
+  uint32 failed = 10;
+  repeated BulkModerationItem items = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+message ResolveModerationCaseRequest {
+  string server_id = 1;
+  string case_id = 2;
+  ModerationCaseStatus status = 3;
+}
+
+message ListModerationNotesRequest {
+  string server_id = 1;
+  ModerationPageRequest page = 2;
+}
+
+message ListModerationNotesResponse {
+  repeated ModerationNote notes = 1;
+  uint32 current_page = 2;
+  bool has_next_page = 3;
+}
+
+message CreateModerationNoteRequest {
+  string server_id = 1;
+  string target_user_id = 2;
+  string content = 3;
+}
+
+message DeleteModerationNoteRequest {
+  string server_id = 1;
+  string note_id = 2;
+}
+
+message ListAutomodRulesResponse {
+  repeated AutomodRule rules = 1;
+}
+
+message UpsertAutomodRuleRequest {
+  string server_id = 1;
+  optional string rule_id = 2;
+  string name = 3;
+  AutomodRuleKind kind = 4;
+  AutomodRuleConfig config = 5;
+  bool enabled = 6;
+}
+
+message DeleteAutomodRuleRequest {
+  string server_id = 1;
+  string rule_id = 2;
+}
+
+message ListModerationAuditRequest {
+  string server_id = 1;
+  ModerationPageRequest page = 2;
+}
+
+message ListModerationAuditResponse {
+  repeated ModerationAuditEntry entries = 1;
+  uint32 current_page = 2;
+  bool has_next_page = 3;
+}
+
+message GetModerationDashboardRequest {
+  string server_id = 1;
+  uint32 case_page_size = 2;
+  uint32 note_page_size = 3;
+  uint32 audit_page_size = 4;
+}
+
+message ModerationDashboard {
+  ListModerationCasesResponse cases = 1;
+  ListAutomodRulesResponse rules = 2;
+  ListModerationNotesResponse notes = 3;
+  ListModerationAuditResponse audit = 4;
+}
+
+message GetUserModerationSnapshotRequest {
+  string server_id = 1;
+  string user_id = 2;
+  uint32 page_size = 3;
+}
+
+message UserModerationSnapshot {
+  ListModerationNotesResponse notes = 1;
+  ListModerationCasesResponse cases = 2;
+}

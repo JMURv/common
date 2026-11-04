@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package benito.public.v1;
+
+import "public/v1/common.proto";
+import "public/v1/chat.proto";
+import "public/v1/users.proto";
+
+service CallsService {
+  rpc GetToken(GetCallTokenRequest) returns (CallToken);
+  rpc ListActiveParticipants(ListActiveCallParticipantsRequest) returns (ListActiveCallParticipantsResponse);
+  rpc DisconnectParticipant(DisconnectCallParticipantRequest) returns (Empty);
+  rpc MoveParticipant(MoveCallParticipantRequest) returns (Empty);
+}
+
+message GetCallTokenRequest {
+  string room_id = 1;
+  string user_name = 2;
+  repeated PublicMedia user_media = 3;
+  optional string avatar_color = 4;
+}
+
+message CallToken {
+  string token = 1;
+  string url = 2;
+}
+
+message ListActiveCallParticipantsRequest {
+  repeated string room_ids = 1;
+}
+
+message ActiveCallParticipant {
+  string id = 1;
+  string name = 2;
+  string metadata = 3;
+  repeated MetadataEntry attributes = 4;
+}
+
+message RoomCallParticipants {
+  string room_id = 1;
+  repeated ActiveCallParticipant participants = 2;
+}
+
+message ListActiveCallParticipantsResponse {
+  repeated RoomCallParticipants rooms = 1;
+}
+
+message DisconnectCallParticipantRequest {
+  string room_id = 1;
+  string participant_id = 2;
+}
+
+message MoveCallParticipantRequest {
+  string source_room_id = 1;
+  string target_room_id = 2;
+  string participant_id = 3;
+}

@@ -1,0 +1,50 @@
+syntax = "proto3";
+package device;
+
+import "google/protobuf/timestamp.proto";
+
+service DeviceService {
+  rpc ListDevices(ListDevicesRequest) returns(ListDevicesResponse);
+  rpc GetDevice(GetDeviceRequest) returns(GetDeviceResponse);
+  rpc UpdateDevice(UpdateDeviceRequest) returns(UpdateDeviceResponse);
+  rpc DeleteDevice(DeleteDeviceRequest) returns(DeleteDeviceResponse);
+}
+
+message Device {
+  string id = 1;
+  string name = 2;
+  string device_type = 3;
+  string os = 4;
+  string browser = 5;
+  string ua = 6;
+  string ip = 7;
+  bool remember_me = 8;
+  google.protobuf.Timestamp last_active = 9;
+}
+
+message ListDevicesRequest {}
+
+message ListDevicesResponse {
+  repeated Device devices = 1;
+}
+
+message GetDeviceRequest {
+  string did = 1;
+}
+
+message GetDeviceResponse {
+  Device device = 1;
+}
+
+message UpdateDeviceRequest {
+  string did = 1;
+  string name = 2;
+}
+
+message UpdateDeviceResponse {}
+
+message DeleteDeviceRequest {
+  string did = 1;
+}
+
+message DeleteDeviceResponse {}

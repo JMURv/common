@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package benito.media.internal.v1;
+
+service MediaReadService {
+  rpc IssueReadCapability(IssueReadCapabilityRequest) returns (MediaReadCapability);
+  rpc IssueReadCapabilities(IssueReadCapabilitiesRequest) returns (MediaReadCapabilities);
+}
+
+message IssueReadCapabilityRequest {
+  string media_id = 1;
+  uint64 max_bytes = 2;
+  MediaReadAudience audience = 3;
+}
+
+message IssueReadCapabilitiesRequest {
+  repeated IssueReadCapabilityRequest targets = 1;
+}
+
+message MediaReadCapabilities {
+  repeated MediaReadCapability items = 1;
+}
+
+enum MediaReadAudience {
+  MEDIA_READ_AUDIENCE_UNSPECIFIED = 0;
+  MEDIA_READ_AUDIENCE_INTERNAL = 1;
+  MEDIA_READ_AUDIENCE_PUBLIC = 2;
+}
+
+message MediaReadCapability {
+  string media_id = 1;
+  string source_revision = 2;
+  uint64 content_length = 3;
+  optional string mime_type = 4;
+  string read_url = 5;
+  int64 expires_at_unix_seconds = 6;
+}

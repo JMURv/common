@@ -1,0 +1,174 @@
+syntax = "proto3";
+package media;
+
+service MediaService {
+  rpc BeginUpload(BeginUploadRequest) returns (UploadSession);
+  rpc RenewUploadParts(RenewUploadPartsRequest) returns (UploadParts);
+  rpc CompleteUpload(CompleteUploadRequest) returns (PreparedUpload);
+  rpc CommitUpload(CommitUploadRequest) returns (MediaObject);
+  rpc AbortUpload(AbortUploadRequest) returns (MediaMutationResponse);
+  rpc GetMedia(GetMediaRequest) returns (GetMediaResponse);
+  rpc GetMediaVariants(GetMediaVariantsRequest) returns (GetMediaVariantsResponse);
+  rpc EnsureMediaVariant(EnsureMediaVariantRequest) returns (MediaVariant);
+  rpc CheckReferences(CheckReferencesRequest) returns (CheckReferencesResponse);
+  rpc ClaimReferences(ClaimReferencesRequest) returns (MediaMutationResponse);
+}
+
+message BeginUploadRequest {
+  string bucket = 1;
+  string reference_namespace = 2;
+  string reference_id = 3;
+  int64 expected_size = 4;
+  optional string extension = 5;
+  optional string mime_type = 6;
+  MediaTransform transform = 7;
+  repeated MediaVariantProfile variant_profiles = 8;
+}
+
+message UploadPartTarget {
+  uint32 part_number = 1;
+  string upload_url = 2;
+}
+
+message UploadParts {
+  repeated UploadPartTarget parts = 1;
+  int64 expires_at_unix_seconds = 2;
+}
+
+message UploadSession {
+  string session_id = 1;
+  int64 part_size = 2;
+  repeated UploadPartTarget parts = 3;
+  int64 expires_at_unix_seconds = 4;
+}
+
+message RenewUploadPartsRequest {
+  string session_id = 1;
+  repeated uint32 part_numbers = 2;
+}
+
+message CompletedUploadPart {
+  uint32 part_number = 1;
+  string etag = 2;
+}
+
+message CompleteUploadRequest {
+  string session_id = 1;
+  repeated CompletedUploadPart parts = 2;
+}
+
+message PreparedUpload {
+  string session_id = 1;
+  int64 actual_size = 2;
+  optional string detected_mime_type = 3;
+  optional int64 detected_duration_ms = 4;
+}
+
+message CommitUploadRequest { string session_id = 1; }
+message AbortUploadRequest { string session_id = 1; }
+
+enum MediaTransform {
+  MEDIA_TRANSFORM_NONE = 0;
+  MEDIA_TRANSFORM_VOICE_OPUS_OGG = 1;
+  MEDIA_TRANSFORM_IMAGE_WEBP_FIT_512_V1 = 2;
+  MEDIA_TRANSFORM_IMAGE_WEBP_FIT_2048_V1 = 3;
+}
+
+message MediaFacts {
+  optional int32 width = 1;
+  optional int32 height = 2;
+  optional int64 duration_ms = 3;
+  optional string video_codec = 4;
+  bool supports_streaming = 5;
+}
+
+message MediaResource {
+  string id = 1;
+  int64 size = 2;
+  optional string mime_type = 3;
+  string bucket = 4;
+  string object_key = 5;
+  string revision = 6;
+  MediaFacts facts = 7;
+}
+
+message MediaObject {
+  string id = 1;
+  int64 size = 2;
+  optional string mime_type = 3;
+  string bucket = 4;
+  string object_key = 5;
+  string revision = 6;
+  MediaFacts facts = 7;
+  repeated MediaVariant representations = 8;
+}
+
+message GetMediaRequest { repeated string media_ids = 1; }
+message GetMediaResponse { repeated MediaObject data = 1; }
+
+enum MediaVariantProfile {
+  MEDIA_VARIANT_PROFILE_UNSPECIFIED = 0;
+  MEDIA_VARIANT_PROFILE_IMAGE_MINI = 1;
+  MEDIA_VARIANT_PROFILE_IMAGE_THUMBNAIL = 2;
+  MEDIA_VARIANT_PROFILE_IMAGE_DISPLAY = 3;
+  MEDIA_VARIANT_PROFILE_VIDEO_POSTER = 4;
+  MEDIA_VARIANT_PROFILE_VIDEO_PLAYBACK_480 = 5;
+  MEDIA_VARIANT_PROFILE_VIDEO_PLAYBACK_720 = 6;
+  MEDIA_VARIANT_PROFILE_ANIMATED_REACTION = 7;
+  MEDIA_VARIANT_PROFILE_VIDEO_STORYBOARD = 8;
+  MEDIA_VARIANT_PROFILE_SPEECH_AUDIO = 9;
+  MEDIA_VARIANT_PROFILE_STICKER_STATIC_WEBP = 10;
+  MEDIA_VARIANT_PROFILE_STICKER_ANIMATED_WEBM = 11;
+  MEDIA_VARIANT_PROFILE_STICKER_ANIMATED_MP4 = 12;
+  MEDIA_VARIANT_PROFILE_STICKER_POSTER = 13;
+}
+
+enum MediaVariantState {
+  MEDIA_VARIANT_STATE_UNSPECIFIED = 0;
+  MEDIA_VARIANT_STATE_PENDING = 1;
+  MEDIA_VARIANT_STATE_PROCESSING = 2;
+  MEDIA_VARIANT_STATE_READY = 3;
+  MEDIA_VARIANT_STATE_FAILED = 4;
+}
+
+message MediaVariant {
+  string source_media_id = 1;
+  MediaVariantProfile profile = 2;
+  int32 profile_version = 3;
+  MediaVariantState state = 4;
+  optional MediaResource output = 5;
+  bytes inline_minithumbnail = 6;
+  optional MediaStoryboard storyboard = 7;
+}
+
+message MediaStoryboard {
+  int32 frame_width = 1;
+  int32 frame_height = 2;
+  int32 columns = 3;
+  repeated int64 frame_times_ms = 4;
+}
+
+message GetMediaVariantsRequest { repeated string source_media_ids = 1; }
+message GetMediaVariantsResponse { repeated MediaVariant data = 1; }
+message EnsureMediaVariantRequest {
+  string source_media_id = 1;
+  MediaVariantProfile profile = 2;
+  int32 profile_version = 3;
+}
+
+message CheckReferencesRequest {
+  repeated string media_ids = 1;
+  string owner_type = 2;
+  string owner_id = 3;
+}
+message CheckReferencesResponse { bool owns_all = 1; }
+
+message ClaimReferencesRequest {
+  repeated string media_ids = 1;
+  string from_owner_type = 2;
+  string from_owner_id = 3;
+  string to_owner_type = 4;
+  string to_owner_id = 5;
+}
+
+message MediaMutationResponse { repeated string released_media_ids = 1; }

@@ -1,0 +1,31 @@
+[package]
+name = "common"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96.1"
+publish = false
+
+[features]
+default = []
+contracts = ["dep:bytes", "dep:tonic", "dep:tonic-prost", "dep:prost", "dep:prost-types", "dep:anyhow", "dep:tonic-prost-build"]
+postgres-wakeup = ["dep:sqlx", "dep:tokio", "dep:tracing"]
+test-support = ["dep:testcontainers", "dep:thiserror"]
+
+[dependencies]
+bytes = { version = "1.11.1", optional = true }
+tonic = { version = "0.14.6", optional = true }
+tonic-prost = { version = "0.14.6", optional = true }
+prost = { version = "0.14.4", optional = true }
+prost-types = { version = "0.14.4", optional = true }
+sqlx = { version = "0.9.0", default-features = false, features = ["postgres", "runtime-tokio"], optional = true }
+tokio = { version = "1.46.1", default-features = false, features = ["macros", "rt", "sync", "time"], optional = true }
+tracing = { version = "0.1", optional = true }
+testcontainers = { version = "0.28.0", default-features = false, features = ["aws-lc-rs", "http_wait_plain"], optional = true }
+thiserror = { version = "2.0.17", optional = true }
+
+[build-dependencies]
+anyhow = { version = "1.0.100", optional = true }
+tonic-prost-build = { version = "0.14.6", default-features = false, features = ["transport"], optional = true }
+
+[package.metadata.cargo-machete]
+ignored = ["tonic-prost", "bytes", "prost", "prost-types"]
