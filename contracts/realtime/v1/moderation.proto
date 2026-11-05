@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package benito.realtime.v1;
+
+import "realtime/v1/message_types.proto";
+
+message ModerationCaseEvent {
+  bytes id = 1;
+  bytes server_id = 2;
+  bytes target_user_id = 3;
+  bytes actor_user_id = 4;
+  string action = 5;
+  string reason = 6;
+  string status = 7;
+  optional int64 expires_at_unix_ms = 8;
+  int64 created_at_unix_ms = 9;
+  int64 updated_at_unix_ms = 10;
+  optional string target_user_name = 11;
+  repeated MediaAttachment target_user_media = 12;
+  optional string target_user_avatar_color = 13;
+}
+
+message ModerationNoteEvent {
+  bytes id = 1;
+  bytes server_id = 2;
+  bytes target_user_id = 3;
+  bytes author_user_id = 4;
+  string content = 5;
+  int64 created_at_unix_ms = 6;
+  int64 updated_at_unix_ms = 7;
+  optional string target_user_name = 8;
+  repeated MediaAttachment target_user_media = 9;
+  optional string target_user_avatar_color = 10;
+}
+
+message ModerationNoteDeletedEvent {
+  bytes id = 1;
+  bytes server_id = 2;
+  bytes target_user_id = 3;
+}
+
+message AutomodRulesChangedEvent {
+  AutomodRuleOperation operation = 1;
+  AutomodRule rule = 2;
+}
+
+message AutomodRule {
+  bytes id = 1;
+  bytes server_id = 2;
+  string name = 3;
+  bool enabled = 4;
+  bytes created_by = 5;
+  int64 created_at_unix_ms = 6;
+  int64 updated_at_unix_ms = 7;
+
+  oneof config {
+    SlowmodeConfig slowmode = 10;
+    WordFilterConfig word_filter = 11;
+    LinkRestrictionConfig link_restriction = 12;
+    MediaRestrictionConfig media_restriction = 13;
+  }
+}
+
+message SlowmodeConfig {
+  uint32 seconds = 1;
+  bool staff_exempt = 2;
+}
+
+message WordFilterConfig {
+  repeated string words = 1;
+  bool staff_exempt = 2;
+}
+
+message LinkRestrictionConfig {
+  bool staff_exempt = 1;
+}
+
+message MediaRestrictionConfig {
+  bool staff_exempt = 1;
+}
+
+message AntiRaidIncidentAlertEvent {
+  bytes incident_id = 1;
+  bytes server_id = 2;
+  string detector_mode = 3;
+  string effective_mode = 4;
+  uint32 score = 5;
+  repeated string reason_codes = 6;
+  int64 occurred_at_unix_ms = 7;
+  bool shadow = 8;
+}
+
+enum AutomodRuleOperation {
+  AUTOMOD_RULE_OPERATION_UNSPECIFIED = 0;
+  AUTOMOD_RULE_OPERATION_UPSERT = 1;
+  AUTOMOD_RULE_OPERATION_DELETE = 2;
+}

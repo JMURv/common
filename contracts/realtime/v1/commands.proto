@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package benito.realtime.v1;
+
+import "realtime/v1/message_types.proto";
+
+message AuthenticateCommand {
+  string access_token = 1;
+}
+
+message HeartbeatCommand {
+  optional double last_location_latitude = 1;
+  optional double last_location_longitude = 2;
+  optional string status = 3;
+}
+
+message CreateMessageCommand {
+  bytes client_id = 1;
+  bytes user_id = 2;
+  bytes room_id = 3;
+  optional bytes reply_id = 4;
+  optional bytes forwarded_from_message_id = 5;
+  optional bytes collection_id = 6;
+  string content = 7;
+  repeated MediaAttachment media = 8;
+  optional MessageMetadata metadata = 9;
+  MessageType type = 10;
+  reserved 11;
+  repeated MentionTarget mentioned_principals = 12;
+}
+
+message UpdateMessageCommand {
+  bytes message_id = 1;
+  bytes room_id = 2;
+  string content = 3;
+  repeated MediaAttachment media = 4;
+  reserved 5;
+  repeated MentionTarget mentioned_principals = 6;
+}
+
+message DeleteMessageCommand {
+  bytes message_id = 1;
+  bytes room_id = 2;
+}
+
+message ToggleReactionCommand {
+  bytes message_id = 1;
+  bytes room_id = 2;
+  bytes user_id = 3;
+  string emoji_name = 4;
+}
+
+message SeeMessageCommand {
+  bytes message_id = 1;
+  bytes room_id = 2;
+}
+
+message TogglePinCommand {
+  bytes message_id = 1;
+  bytes room_id = 2;
+}
+
+message WritingCommand {
+  bytes room_id = 1;
+}
+
+message CallingCommand {
+  bytes user_id = 1;
+  string user_name = 2;
+  repeated MediaAttachment user_media = 3;
+  optional string avatar_color = 4;
+  bytes room_id = 5;
+  optional string room_name = 6;
+  repeated bytes receiver_ids = 7;
+}
+
+message DeclineCallCommand {
+  bytes user_id = 1;
+  bytes room_id = 2;
+  repeated bytes receiver_ids = 3;
+}
+
+message VoiceStateCommand {
+  bytes room_id = 1;
+  bool audio_muted = 2;
+  bool deafened = 3;
+}

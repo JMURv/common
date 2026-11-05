@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package benito.realtime.v1;
+
+
+enum MessageTranscriptionStatus {
+  MESSAGE_TRANSCRIPTION_STATUS_UNSPECIFIED = 0;
+  MESSAGE_TRANSCRIPTION_STATUS_QUEUED = 1;
+  MESSAGE_TRANSCRIPTION_STATUS_PROCESSING = 2;
+  MESSAGE_TRANSCRIPTION_STATUS_READY = 3;
+  MESSAGE_TRANSCRIPTION_STATUS_FAILED_RETRYABLE = 4;
+  MESSAGE_TRANSCRIPTION_STATUS_FAILED_TERMINAL = 5;
+  MESSAGE_TRANSCRIPTION_STATUS_CANCELLED = 6;
+}
+
+message MessageTranscriptionSegment {
+  uint64 start_ms = 1;
+  uint64 end_ms = 2;
+  string text = 3;
+  optional float confidence = 4;
+}
+
+message MessageTranscription {
+  bytes message_id = 1;
+  bytes media_id = 2;
+  MessageTranscriptionStatus status = 3;
+  optional string text = 4;
+  optional string detected_language = 5;
+  repeated MessageTranscriptionSegment segments = 6;
+  optional string error_code = 7;
+  bool retryable = 8;
+  int64 requested_at_unix_ms = 9;
+  int64 updated_at_unix_ms = 10;
+}
+
+message MessageTranscriptionChangedEvent {
+  bytes room_id = 1;
+  MessageTranscription transcription = 2;
+}
+
+enum ChatSummaryStatus {
+  CHAT_SUMMARY_STATUS_UNSPECIFIED = 0;
+  CHAT_SUMMARY_STATUS_QUEUED = 1;
+  CHAT_SUMMARY_STATUS_PROCESSING = 2;
+  CHAT_SUMMARY_STATUS_READY = 3;
+  CHAT_SUMMARY_STATUS_FAILED_RETRYABLE = 4;
+  CHAT_SUMMARY_STATUS_FAILED_TERMINAL = 5;
+  CHAT_SUMMARY_STATUS_CANCELLED = 6;
+}
+
+message ChatSummarySource {
+  bytes message_id = 1;
+  uint64 room_sequence = 2;
+}
+
+message ChatSummaryItem {
+  string text = 1;
+  repeated ChatSummarySource sources = 2;
+}
+
+message ChatSummary {
+  bytes snapshot_id = 1;
+  bytes room_id = 2;
+  uint64 from_sequence = 3;
+  uint64 to_sequence = 4;
+  ChatSummaryStatus status = 5;
+  optional string overview = 6;
+  repeated ChatSummaryItem key_decisions = 7;
+  repeated ChatSummaryItem mentions = 8;
+  repeated ChatSummaryItem open_questions = 9;
+  repeated ChatSummaryItem action_items = 10;
+  optional string model_revision = 11;
+  optional string error_code = 12;
+  bool retryable = 13;
+  int64 updated_at_unix_ms = 14;
+}
+
+message ChatSummaryChangedEvent {
+  ChatSummary summary = 1;
+}

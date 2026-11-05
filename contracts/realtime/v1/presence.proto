@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package benito.realtime.v1;
+
+import "realtime/v1/message_types.proto";
+
+message PresenceChangedEvent {
+  bytes user_id = 1;
+  string status = 2;
+  int64 updated_at_unix_ms = 3;
+}
+
+message VoiceStateChangedEvent {
+  bytes room_id = 1;
+  bytes user_id = 2;
+  bool audio_muted = 3;
+  bool deafened = 4;
+}
+
+message VoiceParticipantMovedEvent {
+  bytes user_id = 1;
+  bytes source_room_id = 2;
+  bytes target_room_id = 3;
+}
+
+message VoiceParticipantEvent {
+  bytes room_id = 1;
+  VoiceParticipant participant = 2;
+}
+
+message VoiceParticipant {
+  bytes user_id = 1;
+  string name = 2;
+  bool audio_muted = 3;
+  bool deafened = 4;
+  optional string avatar_color = 5;
+  repeated MediaAttachment media = 6;
+}
+
+message VoiceMoveRequestedEvent {
+  bytes source_room_id = 1;
+  bytes target_room_id = 2;
+}

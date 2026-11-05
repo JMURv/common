@@ -8,6 +8,7 @@ publish = false
 [features]
 default = []
 contracts = ["dep:bytes", "dep:tonic", "dep:tonic-prost", "dep:prost", "dep:prost-types", "dep:anyhow", "dep:tonic-prost-build"]
+realtime = ["contracts", "dep:serde_json", "dep:uuid"]
 postgres-wakeup = ["dep:sqlx", "dep:tokio", "dep:tracing"]
 test-support = ["dep:testcontainers", "dep:thiserror"]
 
@@ -17,6 +18,8 @@ tonic = { version = "0.14.6", optional = true }
 tonic-prost = { version = "0.14.6", optional = true }
 prost = { version = "0.14.4", optional = true }
 prost-types = { version = "0.14.4", optional = true }
+serde_json = { version = "1.0", optional = true }
+uuid = { version = "1", default-features = false, features = ["std", "serde"], optional = true }
 sqlx = { version = "0.9.0", default-features = false, features = ["postgres", "runtime-tokio"], optional = true }
 tokio = { version = "1.46.1", default-features = false, features = ["macros", "rt", "sync", "time"], optional = true }
 tracing = { version = "0.1", optional = true }

@@ -1,12 +1,14 @@
 # Общие компоненты Benitoo
 
-Один crate `common`, отдельный Git submodule. Прикладные правила и NATS DTO
-остаются у сервисов; этот репозиторий содержит только общие технические компоненты.
+Один crate `common`, отдельный Git submodule. Прикладные правила и DTO событий
+остаются у сервисов. Исключение — согласованные общие Protobuf-команды realtime:
+они переиспользуют публичные типы, а не копируют их в каждый сервис (DEC-44 родителя).
 
 | Feature | API | Зависимости и назначение |
 |---|---|---|
 | Без features | Пустой фасад | Нет runtime, Testcontainers и protobuf codegen |
 | `contracts` | `common::contracts` | Канонические protobuf, Rust gRPC/WS types; требует `protoc` |
+| `realtime` | Методы общих Protobuf-типов | Включает `contracts`; конструктор NATS command envelope, проекции входных вложений и poll. UUID/serde_json; без авторизации и I/O |
 | `postgres-wakeup` | `common::postgres_wakeup::PostgresWakeup` | SQLx/Tokio, LISTEN/NOTIFY для outbox; уведомление лишь повод перечитать БД |
 | `test-support` | `common::test_support` | Testcontainers harness PostgreSQL, Redis, NATS, RustFS, SMTP, Elasticsearch; только dev-dependency |
 
@@ -19,8 +21,19 @@ Harness не зависит от приложений, не применяет �
 
 Единственный источник — `contracts/`; `build.rs` работает только с feature `contracts`.
 Смена расположения не меняет package, поля, номера или RPC. Flutter генерируется
-из того же каталога командами родительского проекта. NATS-only схемы удаляются
-парными изменениями отправителя и получателя; общего набора NATS DTO здесь нет.
+из того же каталога командами родительского проекта. AI JSON и бинарный fanout
+принадлежат сервисам; `realtime/internal/v1/command.proto` сохраняется для NATS.
+
+Публичный package `benito.realtime.v1` разделён на `commands`, `message_types`,
+`messages`, `ai`, `recordings`, `presence`, `communities`, `moderation`.
+`realtime.proto` содержит кадры и служебные ответы, экспортирует эти схемы через
+`import public`. Rust namespace и Flutter import `realtime.pb.dart` сохраняются.
+Для Dart генерируются все девять файлов, а не только фасад.
+
+Feature `realtime` добавляет методы к каноническим типам: `RealtimeCommandEnvelope::new`
+и `MediaAttachment::into_command_value` / `MessageMetadata::into_command_value`.
+Проекция вложения сохраняет входную revision, не переносит выходные read URL.
+Модель не копируется; сервисы сохраняют свои контекстные проверки и ошибки.
 
 ## PostgreSQL wakeup
 

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package benito.realtime.internal.v1;
 
-import "realtime/v1/realtime.proto";
+import "realtime/v1/commands.proto";
 
 message RealtimeCommandEnvelope {
   uint32 protocol_version = 1;

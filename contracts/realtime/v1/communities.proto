@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+package benito.realtime.v1;
+
+import "realtime/v1/message_types.proto";
+
+message OwnershipTransferredEvent {
+  bytes entity_id = 1;
+  bytes owner_id = 2;
+}
+
+message EntityDeletedEvent {
+  bytes id = 1;
+}
+
+message ServerMemberChangedEvent {
+  bytes server_id = 1;
+  bytes user_id = 2;
+}
+
+message ServerMemberAddedEvent {
+  bytes server_id = 1;
+  UserProfile user = 2;
+  optional ServerProjection server = 3;
+}
+
+message ServerMemberRoleChangedEvent {
+  bytes server_id = 1;
+  bytes user_id = 2;
+  RoleSummary role = 3;
+  bool assigned = 4;
+}
+
+message RoleSummary {
+  bytes id = 1;
+  string name = 2;
+}
+
+message UserProfile {
+  bytes id = 1;
+  string name = 2;
+  string status = 3;
+  bool manual_status = 4;
+  repeated MediaAttachment media = 5;
+  optional string avatar_color = 6;
+  optional string cover_color = 7;
+  int64 created_at_unix_ms = 8;
+  int64 updated_at_unix_ms = 9;
+  optional string friendship_status = 10;
+  optional string friendship_direction = 11;
+  optional int64 friendship_since_unix_ms = 12;
+  optional string friend_code = 13;
+}
+
+message RoomPermissionsChangedEvent {
+  bytes room_id = 1;
+  RoomAccessSettings settings = 2;
+}
+
+message RoomAccessSettings {
+  bool default_can_view = 1;
+  bool default_can_send = 2;
+  bool default_can_connect = 3;
+  repeated RoomPermissionOverride overrides = 4;
+}
+
+message RoomPermissionOverride {
+  bytes user_id = 1;
+  optional bool can_view = 2;
+  optional bool can_send = 3;
+  optional bool can_connect = 4;
+}
+
+enum ConversationKind {
+  CONVERSATION_KIND_UNSPECIFIED = 0;
+  CONVERSATION_KIND_ROOM = 1;
+  CONVERSATION_KIND_HUMAN_DIRECT = 2;
+  reserved 3;
+  reserved "CONVERSATION_KIND_BOT_DIRECT";
+}
+
+message RoomProjection {
+  bytes id = 1;
+  optional bytes server_id = 2;
+  bytes owner_id = 3;
+  bool direct = 4;
+  string name = 5;
+  string type = 6;
+  optional string last_message_content = 7;
+  uint64 unread_count = 8;
+  int64 last_seen_seq = 9;
+  int64 created_at_unix_ms = 10;
+  int64 updated_at_unix_ms = 11;
+  repeated bytes allowed_user_ids = 12;
+  optional bytes last_message_id = 13;
+  optional PrincipalProjection last_message_author = 14;
+  optional bytes last_seen_message_id = 15;
+  repeated MediaAttachment last_message_media = 16;
+  optional int64 last_message_created_at_unix_ms = 17;
+  optional int64 deleted_at_unix_ms = 18;
+  ConversationKind conversation_kind = 19;
+  reserved 20, 21;
+  reserved "bot_identity", "bot_installation_id";
+}
+
+// Complete public identity projection. Clients merge it by updated_at and do
+// not issue a follow-up user/server/media read.
+message UserProfileChangedEvent {
+  UserProfile user = 1;
+}
+
+message ServerProjection {
+  bytes id = 1;
+  bytes owner_id = 2;
+  string name = 3;
+  optional string description = 4;
+  repeated MediaAttachment avatar = 5;
+  string type = 6;
+  optional bool pinned = 7;
+  optional bool has_unread = 8;
+  int64 created_at_unix_ms = 9;
+  int64 updated_at_unix_ms = 10;
+  repeated ServerAssetProjection quick_reactions = 11;
+  repeated ServerAssetProjection soundboard = 12;
+  repeated ServerRoleProjection roles = 13;
+}
+
+message ServerAssetProjection {
+  bytes id = 1;
+  string name = 2;
+  optional string emoji = 3;
+  optional MediaAttachment media = 4;
+  optional MediaAttachment icon = 5;
+  optional uint64 duration_ms = 6;
+}
+
+message ServerRoleProjection {
+  bytes id = 1;
+  optional bytes server_id = 2;
+  string name = 3;
+  optional string description = 4;
+  repeated ServerPermissionProjection permissions = 5;
+  int64 created_at_unix_ms = 6;
+  int64 updated_at_unix_ms = 7;
+}
+
+message ServerPermissionProjection {
+  bytes id = 1;
+  string name = 2;
+  optional string description = 3;
+  int64 created_at_unix_ms = 4;
+  int64 updated_at_unix_ms = 5;
+}
+
+message NotificationEvent {
+  bytes id = 1;
+  bytes user_id = 2;
+  NotificationType type = 3;
+  bool read = 4;
+  int64 created_at_unix_ms = 5;
+  optional UserProfile actor = 6;
+  optional bytes room_id = 7;
+  optional bytes message_id = 8;
+  optional bytes server_id = 9;
+  optional string content = 10;
+  optional bytes request_id = 11;
+  optional bool approved = 12;
+  optional string reason = 13;
+}
+
+enum NotificationType {
+  NOTIFICATION_TYPE_UNSPECIFIED = 0;
+  NOTIFICATION_TYPE_FRIEND_REQUEST = 1;
+  NOTIFICATION_TYPE_FRIEND_REQUEST_ACCEPTED = 2;
+  NOTIFICATION_TYPE_MESSAGE = 3;
+  NOTIFICATION_TYPE_MENTION = 4;
+  NOTIFICATION_TYPE_SERVER_JOIN_REQUEST = 5;
+  NOTIFICATION_TYPE_SERVER_JOIN_REQUEST_APPROVED = 6;
+  NOTIFICATION_TYPE_SERVER_JOIN_REQUEST_REJECTED = 7;
+}

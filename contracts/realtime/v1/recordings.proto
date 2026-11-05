@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package benito.realtime.v1;
+
+
+enum RecordingStatus {
+  RECORDING_STATUS_UNSPECIFIED = 0;
+  RECORDING_STATUS_STARTING = 1;
+  RECORDING_STATUS_RECORDING = 2;
+  RECORDING_STATUS_STOPPING = 3;
+  RECORDING_STATUS_PROCESSING = 4;
+  RECORDING_STATUS_READY = 5;
+  RECORDING_STATUS_FAILED = 6;
+  RECORDING_STATUS_DELETED = 7;
+}
+
+// Complete owner-only projection: the client can merge the transition by
+// updated_at without issuing a follow-up read.
+message RecordingChangedEvent {
+  bytes recording_id = 1;
+  bytes room_id = 2;
+  reserved 3, 5;
+  RecordingStatus status = 4;
+  optional string title = 6;
+  optional bytes media_id = 7;
+  optional string media_revision = 8;
+  optional string media_read_path = 9;
+  optional uint64 duration_ms = 10;
+  optional string failure_code = 11;
+  int64 requested_at_unix_ms = 12;
+  int64 started_at_unix_ms = 13;
+  optional int64 stopped_at_unix_ms = 14;
+  int64 updated_at_unix_ms = 15;
+  optional RecordingTranscription recording_transcription = 16;
+  optional RecordingSummary recording_summary = 17;
+}
+
+enum RecordingTranscriptionStatus {
+  RECORDING_TRANSCRIPTION_STATUS_UNSPECIFIED = 0;
+  RECORDING_TRANSCRIPTION_STATUS_PREPARING_INPUT = 1;
+  RECORDING_TRANSCRIPTION_STATUS_QUEUED = 2;
+  RECORDING_TRANSCRIPTION_STATUS_PROCESSING = 3;
+  RECORDING_TRANSCRIPTION_STATUS_READY = 4;
+  RECORDING_TRANSCRIPTION_STATUS_FAILED_RETRYABLE = 5;
+  RECORDING_TRANSCRIPTION_STATUS_FAILED_TERMINAL = 6;
+  RECORDING_TRANSCRIPTION_STATUS_CANCELLED = 7;
+}
+
+message RecordingTranscriptionSegment {
+  uint64 start_ms = 1;
+  uint64 end_ms = 2;
+  string text = 3;
+  optional float confidence = 4;
+}
+
+message RecordingTranscription {
+  RecordingTranscriptionStatus status = 1;
+  optional string detected_language = 2;
+  optional string text = 3;
+  repeated RecordingTranscriptionSegment segments = 4;
+  optional string error_code = 5;
+  bool retryable = 6;
+  int64 requested_at_unix_ms = 7;
+  int64 updated_at_unix_ms = 8;
+}
+
+enum RecordingSummaryStatus {
+  RECORDING_SUMMARY_STATUS_UNSPECIFIED = 0;
+  RECORDING_SUMMARY_STATUS_QUEUED = 1;
+  RECORDING_SUMMARY_STATUS_PROCESSING = 2;
+  RECORDING_SUMMARY_STATUS_READY = 3;
+  RECORDING_SUMMARY_STATUS_FAILED_RETRYABLE = 4;
+  RECORDING_SUMMARY_STATUS_FAILED_TERMINAL = 5;
+  RECORDING_SUMMARY_STATUS_CANCELLED = 6;
+}
+
+message RecordingSummarySource {
+  uint64 start_ms = 1;
+  uint64 end_ms = 2;
+}
+
+message RecordingSummaryItem {
+  string text = 1;
+  repeated RecordingSummarySource sources = 2;
+}
+
+message RecordingSummary {
+  RecordingSummaryStatus status = 1;
+  optional string overview = 2;
+  repeated RecordingSummaryItem key_decisions = 3;
+  repeated RecordingSummaryItem mentions = 4;
+  repeated RecordingSummaryItem open_questions = 5;
+  repeated RecordingSummaryItem action_items = 6;
+  optional string error_code = 7;
+  bool retryable = 8;
+  int64 requested_at_unix_ms = 9;
+  int64 updated_at_unix_ms = 10;
+}
+
+// Public-to-the-room state contains no owner or media details.
+message RoomRecordingIndicatorChangedEvent {
+  bytes room_id = 1;
+  bool active = 2;
+}
+
+// Signals that an already visible media projection gained a ready derivative.
+// The client refreshes only this media item; no room-wide refetch is required.
+message MediaProjectionChangedEvent {
+  bytes room_id = 1;
+  bytes message_id = 2;
+  bytes media_id = 3;
+  int32 profile = 4;
+  int32 profile_version = 5;
+  string source_revision = 6;
+  optional string owner_type = 8;
+  optional bytes owner_id = 9;
+  reserved 7;
+  reserved "private_response_id";
+}

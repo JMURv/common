@@ -13,7 +13,6 @@ fn main() -> Result<()> {
 
     println!("cargo:rerun-if-changed={CONTRACT_ROOT}");
     tonic_prost_build::configure()
-        .bytes(".benito.realtime.internal.v1.FanoutEnvelope.server_frame")
         .compile_protos(&contracts, &[Path::new(CONTRACT_ROOT).to_path_buf()])
         .context("compile Benito protobuf contracts")?;
     Ok(())

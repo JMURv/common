@@ -26,13 +26,6 @@ pub mod users {
 }
 
 pub mod benito {
-    pub mod ai {
-        pub mod internal {
-            pub mod v1 {
-                tonic::include_proto!("benito.ai.internal.v1");
-            }
-        }
-    }
     pub mod discovery {
         pub mod internal {
             pub mod v1 {
@@ -66,7 +59,6 @@ pub mod benito {
     }
 }
 
-pub use benito::ai::internal::v1 as ai_internal_v1;
 pub use benito::discovery::internal::v1 as discovery_internal_v1;
 pub use benito::media::internal::v1 as media_internal_v1;
 pub use benito::public::v1 as public_v1;

@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package benito.realtime.v1;
+
+
+message MediaAttachment {
+  bytes id = 1;
+  reserved 2, 3;
+  reserved "bucket", "object_key";
+  string purpose = 4;
+  optional string name = 5;
+  optional string mime_type = 6;
+  optional uint64 size = 7;
+  optional uint64 duration_ms = 8;
+  repeated float waveform = 9;
+  optional string revision = 10;
+  optional MediaResourceProjection original = 11;
+  optional MediaResourceProjection display = 12;
+}
+
+message MediaResourceProjection {
+  string revision = 1;
+  string read_url = 2;
+  optional string mime_type = 3;
+  optional uint64 size = 4;
+}
+
+message MessageMetadata {
+  reserved 2;
+  oneof kind {
+    PollMetadata poll = 1;
+  }
+}
+
+message PollMetadata {
+  uint32 version = 1;
+  string question = 2;
+  repeated string options = 3;
+  bool anonymous = 4;
+  bool multiple = 5;
+  bool allow_change = 6;
+}
+
+enum PrincipalKind {
+  PRINCIPAL_KIND_UNSPECIFIED = 0;
+  PRINCIPAL_KIND_USER = 1;
+  reserved 2;
+  reserved "PRINCIPAL_KIND_BOT";
+}
+
+message MentionTarget {
+  bytes principal_id = 1;
+  PrincipalKind kind = 2;
+}
+
+message PrincipalProjection {
+  bytes id = 1;
+  PrincipalKind kind = 2;
+  optional string name = 4;
+  repeated MediaAttachment media = 5;
+  optional string avatar_color = 6;
+  reserved 3;
+  reserved "application_id";
+}
+
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+  MESSAGE_TYPE_USER = 1;
+  MESSAGE_TYPE_SYSTEM = 2;
+}

@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package benito.realtime.v1;
+
+import "realtime/v1/ai.proto";
+import "realtime/v1/message_types.proto";
+
+message MessageEvent {
+  bytes id = 1;
+  bytes client_id = 2;
+  PrincipalProjection author = 3;
+  bytes room_id = 4;
+  int64 room_seq = 5;
+  optional bytes server_id = 6;
+  optional bytes reply_id = 7;
+  optional bytes forwarded_from_message_id = 8;
+  optional PrincipalProjection forwarded_from_author = 9;
+  reserved 10;
+  optional bytes collection_id = 11;
+  string content = 12;
+  repeated MediaAttachment media = 13;
+  repeated Reaction reactions = 14;
+  optional MessageMetadata metadata = 15;
+  bool edited = 16;
+  bool pinned = 17;
+  MessageType type = 18;
+  reserved 19, 20, 21;
+  optional PrincipalProjection reply_author = 22;
+  optional string reply_content = 23;
+  repeated MediaAttachment reply_media = 24;
+  int64 created_at_unix_ms = 25;
+  int64 updated_at_unix_ms = 26;
+  optional int64 deleted_at_unix_ms = 27;
+  repeated MessageTranscription transcriptions = 28;
+  optional StickerMessageProjection sticker = 31;
+  repeated PrincipalProjection mentioned_principals = 32;
+  reserved 29;
+  reserved "action_rows";
+  reserved 30;
+  reserved "component_revision";
+}
+
+message StickerMessageProjection {
+  bytes sticker_id = 1;
+  bytes pack_id = 2;
+  string pack_slug = 3;
+  string pack_title = 4;
+  repeated string emoji = 5;
+  string format = 6;
+  MediaAttachment media = 7;
+  optional MediaAttachment preview = 8;
+  uint64 revision = 9;
+}
+
+message Reaction {
+  string emoji_name = 1;
+  repeated bytes user_ids = 2;
+}
+
+message MessageDeletedEvent {
+  bytes message_id = 1;
+  bytes room_id = 2;
+  bytes user_id = 3;
+  int64 room_seq = 4;
+  MessageType type = 5;
+  optional bytes server_id = 6;
+}
+
+message MessageReactionChangedEvent {
+  bytes message_id = 1;
+  bytes room_id = 2;
+  repeated Reaction reactions = 3;
+}
+
+message MessageSeenEvent {
+  bytes room_id = 1;
+  bytes message_id = 2;
+  bytes user_id = 3;
+  uint32 unread_count = 4;
+  optional bytes server_id = 5;
+  bool server_has_unread = 6;
+  int64 last_seen_seq = 7;
+}
+
+message WritingEvent {
+  bytes room_id = 1;
+  bytes user_id = 2;
+}
